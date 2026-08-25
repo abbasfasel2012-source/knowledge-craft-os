@@ -1,155 +1,231 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { Award, Download, Share2, Calendar, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CertificateCard } from "@/components/CertificateCard";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
-import { LogOut, Settings, Shield, Award } from "lucide-react";
 
-export const Route = createFileRoute("/profile")({
-  head: () => ({ meta: [{ title: "الملف الشخصي — مِرقاة" }] }),
+export const Route = createFileRoute("/profile")(() => ({
+  head: () => ({
+    meta: [
+      { title: "ملفي الشخصي — مِرقاة" },
+      { name: "description", content: "ملفك الشخصي والإحصائيات والشهادات" },
+    ],
+  }),
   component: ProfilePage,
-});
+}));
 
 function ProfilePage() {
-  const { user, loading } = useSession();
-  const navigate = useNavigate();
-  const [fullName, setFullName] = useState("");
-  const [bio, setBio] = useState("");
-  const [phone, setPhone] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [initialized, setInitialized] = useState(false);
+  const { user, logout } = useSession();
 
-  const { data: profile } = useQuery({
-    enabled: !!user,
-    queryKey: ["profile", user?.id],
+  // Fetch user stats
+  const { data: userStats, isLoading: statsLoading } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["userStats", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", user!.id).maybeSingle();
+      const { data, error } = await supabase
+        .from("user_stats")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
       if (error) throw error;
       return data;
     },
   });
 
-  const { data: role } = useQuery({
-    enabled: !!user,
-    queryKey: ["user-role", user?.id],
+  // Fetch certificates
+  const { data: certificates, isLoading: certificatesLoading } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["certificates", user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user!.id).maybeSingle();
-      return data?.role ?? "student";
-    },
-  });
-
-  const { data: badges } = useQuery({
-    enabled: !!user,
-    queryKey: ["user-badges", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("user_badges").select("badge_id,badges(name,description,icon)").eq("user_id", user!.id);
+      const { data, error } = await supabase
+        .from("certificates")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("issued_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
-  if (profile && !initialized) {
-    setFullName(profile.full_name ?? "");
-    setBio(profile.bio ?? "");
-    setPhone(profile.phone ?? "");
-    setInitialized(true);
-  }
-
-  async function handleSave() {
-    if (!user) return;
-    setSaving(true);
-    const { error } = await supabase.from("profiles").update({ full_name: fullName, bio, phone }).eq("id", user.id);
-    setSaving(false);
-    if (error) toast.error(error.message);
-    else toast.success("تم حفظ التغييرات");
-  }
-
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    navigate({ to: "/" });
-  }
-
-  if (loading) return <div className="flex min-h-screen items-center justify-center"><p className="text-sm text-muted-foreground">جارٍ التحميل...</p></div>;
+  // Fetch completion records
+  const { data: records, isLoading: recordsLoading } = useQuery({
+    enabled: !!user?.id,
+    queryKey: ["records", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("completion_records")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("started_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
 
   if (!user) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <p className="text-sm text-muted-foreground">يجب تسجيل الدخول لعرض الملف الشخصي.</p>
-        <Button asChild className="gold-gradient text-gold-foreground"><Link to="/auth">تسجيل الدخول</Link></Button>
+      <div className="flex min-h-screen items-center justify-center px-4 text-center">
+        <div>
+          <h2 className="text-xl font-bold">يرجى تسجيل الدخول</h2>
+          <p className="mt-2 text-sm text-muted-foreground">لعرض ملفك الشخصي</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="px-4 pt-6">
-      <div className="mb-6 flex flex-col items-center gap-3">
-        <Avatar className="h-20 w-20 border-2 border-gold">
-          <AvatarImage src={profile?.avatar_url ?? ""} />
-          <AvatarFallback className="text-2xl">{fullName?.[0] ?? "؟"}</AvatarFallback>
-        </Avatar>
-        <div className="text-center">
-          <h1 className="text-lg font-bold">{fullName || user.email}</h1>
-          <p className="text-xs text-muted-foreground">{user.email}</p>
-          {role && <span className="mt-1 inline-block rounded-full bg-accent px-3 py-0.5 text-[10px] font-semibold text-accent-foreground">{role === "owner" ? "مالك" : role === "instructor" ? "مدرّب" : role === "moderator" ? "مشرف" : "متدرب"}</span>}
+    <div className="space-y-6 px-4 py-6">
+      {/* Profile Header */}
+      <div className="space-y-4 rounded-2xl border border-border bg-card p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">{user.full_name || user.email}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
+          </div>
+          <div className="rounded-full bg-gold/10 p-3">
+            <Award className="h-6 w-6 text-gold" />
+          </div>
         </div>
-        <div className="flex gap-4">
-          <div className="text-center"><p className="text-lg font-bold text-gold">{profile?.points ?? 0}</p><p className="text-[10px] text-muted-foreground">نقطة</p></div>
-          <div className="text-center"><p className="text-lg font-bold text-gold">{badges?.length ?? 0}</p><p className="text-[10px] text-muted-foreground">شارة</p></div>
-        </div>
+
+        {/* Stats Grid */}
+        {statsLoading ? (
+          <div className="grid grid-cols-2 gap-3">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-16 rounded-lg" />
+            ))}
+          </div>
+        ) : userStats ? (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg bg-background p-3 text-center">
+              <p className="text-2xl font-bold text-gold">{userStats.total_courses || 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">دورات</p>
+            </div>
+            <div className="rounded-lg bg-background p-3 text-center">
+              <p className="text-2xl font-bold text-gold">{userStats.completed_courses || 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">مكتملة</p>
+            </div>
+            <div className="rounded-lg bg-background p-3 text-center">
+              <p className="text-2xl font-bold text-gold">{userStats.total_hours || 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">ساعات</p>
+            </div>
+            <div className="rounded-lg bg-background p-3 text-center">
+              <p className="text-2xl font-bold text-gold">{userStats.total_certificates || 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">شهادات</p>
+            </div>
+          </div>
+        ) : null}
       </div>
 
-      <Tabs defaultValue="settings" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="settings"><Settings className="h-3.5 w-3.5" /> الإعدادات</TabsTrigger>
-          <TabsTrigger value="badges"><Award className="h-3.5 w-3.5" /> الشارات</TabsTrigger>
+      {/* Tabs Section */}
+      <Tabs defaultValue="certificates" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 rounded-lg bg-card">
+          <TabsTrigger value="certificates">
+            <Award className="h-4 w-4" />
+            <span className="ml-2">الشهادات</span>
+          </TabsTrigger>
+          <TabsTrigger value="records">السجلات</TabsTrigger>
+          <TabsTrigger value="settings">الإعدادات</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="settings" className="space-y-4">
-          <Card className="border-border">
-            <CardHeader><CardTitle className="text-sm">الملف الشخصي</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2"><Label>الاسم الكامل</Label><Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="اسمك" /></div>
-              <div className="space-y-2"><Label>نبذة تعريفية</Label><Textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="نبذة عنك..." className="min-h-[60px]" /></div>
-              <div className="space-y-2"><Label>رقم الهاتف</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="05xxxxxxxx" /></div>
-              <Button onClick={handleSave} disabled={saving} className="w-full gold-gradient text-gold-foreground">{saving ? "جارٍ الحفظ..." : "حفظ التغييرات"}</Button>
-            </CardContent>
-          </Card>
-
-          {(role === "owner" || role === "instructor") && (
-            <Card className="border-border">
-              <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Shield className="h-4 w-4 text-gold" /> لوحة الإدارة</CardTitle></CardHeader>
-              <CardContent><Button asChild variant="outline" className="w-full"><Link to="/admin">لوحة التحكم</Link></Button></CardContent>
-            </Card>
+        {/* Certificates Tab */}
+        <TabsContent value="certificates" className="space-y-3 mt-4">
+          {certificatesLoading ? (
+            <div className="space-y-3">
+              {[0, 1].map((i) => (
+                <Skeleton key={i} className="h-32 rounded-2xl" />
+              ))}
+            </div>
+          ) : certificates && certificates.length > 0 ? (
+            <div className="space-y-3">
+              {certificates.map((cert) => (
+                <CertificateCard
+                  key={cert.id}
+                  title={cert.title}
+                  courseName={cert.course_name}
+                  userName={user.full_name || user.email}
+                  issueDate={new Date(cert.issued_at).toLocaleDateString('ar-SA')}
+                  certificateId={cert.id}
+                  onDownload={() => {
+                    const link = document.createElement('a');
+                    link.href = cert.certificate_url;
+                    link.download = `${cert.title}.pdf`;
+                    link.click();
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-border bg-background/50 p-6 text-center">
+              <Award className="mx-auto h-8 w-8 text-muted-foreground" />
+              <p className="mt-2 text-sm text-muted-foreground">لا توجد شهادات بعد</p>
+            </div>
           )}
-
-          <Button onClick={handleSignOut} variant="outline" className="w-full text-destructive"><LogOut className="h-4 w-4" /> تسجيل الخروج</Button>
         </TabsContent>
 
-        <TabsContent value="badges" className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            {badges?.map((ub) => {
-              const b = ub as { badge_id: string; badges: { name: string; description: string; icon: string } };
-              const badge = b.badges;
-              return (
-                <Card key={b.badge_id} className="border-gold/30 bg-accent/20">
-                  <CardContent className="flex flex-col items-center gap-2 p-4 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full gold-gradient"><Award className="h-6 w-6 text-gold-foreground" /></div>
-                    <p className="text-sm font-semibold">{badge?.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{badge?.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-            {(!badges || badges.length === 0) && <div className="col-span-2 py-8 text-center text-sm text-muted-foreground">لم تكسب أي شارات بعد. أكمل دروساً واختبارات لتحصل على شارات!</div>}
+        {/* Records Tab */}
+        <TabsContent value="records" className="space-y-3 mt-4">
+          {recordsLoading ? (
+            <div className="space-y-2">
+              {[0, 1, 2].map((i) => (
+                <Skeleton key={i} className="h-20 rounded-lg" />
+              ))}
+            </div>
+          ) : records && records.length > 0 ? (
+            <div className="space-y-2">
+              {records.map((record) => (
+                <div key={record.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+                  <div className={`rounded-full p-2 ${
+                    record.status === 'completed' ? 'bg-green-500/10' : 'bg-gold/10'
+                  }`}>
+                    <CheckCircle2 className={`h-4 w-4 ${
+                      record.status === 'completed' ? 'text-green-600' : 'text-gold'
+                    }`} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold">{record.course_title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {record.progress}% • {record.time_spent} دقيقة
+                    </p>
+                  </div>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-border bg-background/50 p-6 text-center">
+              <p className="text-sm text-muted-foreground">لا توجد سجلات بعد</p>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Settings Tab */}
+        <TabsContent value="settings" className="space-y-3 mt-4">
+          <div className="space-y-3 rounded-lg border border-border bg-card p-4">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground">الاسم الكامل</label>
+              <p className="mt-1 text-sm font-semibold">{user.full_name || 'لم يتم تعيين'}</p>
+            </div>
+            <div className="border-t border-border pt-3">
+              <label className="text-xs font-semibold text-muted-foreground">البريد الإلكتروني</label>
+              <p className="mt-1 text-sm font-semibold">{user.email}</p>
+            </div>
+            <div className="border-t border-border pt-3">
+              <label className="text-xs font-semibold text-muted-foreground">نوع الحساب</label>
+              <p className="mt-1 text-sm font-semibold capitalize">
+                {user.role === 'admin' ? 'مشرف' : 'متدرب'}
+              </p>
+            </div>
           </div>
+
+          <button
+            onClick={() => logout()}
+            className="w-full rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-500/20"
+          >
+            تسجيل الخروج
+          </button>
         </TabsContent>
       </Tabs>
     </div>
