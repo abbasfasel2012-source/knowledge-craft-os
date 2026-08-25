@@ -17,11 +17,13 @@ export default defineConfig({
       sourcemap: false,
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor: ["react", "react-dom"],
-            router: ["@tanstack/react-router"],
-            query: ["@tanstack/react-query"],
-            ui: ["@radix-ui/react-dialog", "@radix-ui/react-tabs"],
+          manualChunks(id: string) {
+            if (id.includes("node_modules")) {
+              if (id.includes("react-dom") || id.includes("/react/")) return "vendor";
+              if (id.includes("@tanstack/react-router")) return "router";
+              if (id.includes("@tanstack/react-query")) return "query";
+              if (id.includes("@radix-ui/react-dialog") || id.includes("@radix-ui/react-tabs")) return "ui";
+            }
           },
         },
       },
