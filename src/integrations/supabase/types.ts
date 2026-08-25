@@ -38,6 +38,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ads: {
+        Row: {
+          created_at: string
+          created_by: string
+          ends_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          link_url: string | null
+          placement: string
+          position: number
+          starts_at: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          link_url?: string | null
+          placement?: string
+          position?: number
+          starts_at?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          link_url?: string | null
+          placement?: string
+          position?: number
+          starts_at?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
           body: string
@@ -492,28 +534,40 @@ export type Database = {
       platform_settings: {
         Row: {
           about: string
+          accent_color: string
           allow_signup: boolean
+          certificate_footer: string
           contact_email: string
           id: number
+          logo_url: string | null
           platform_name: string
+          primary_color: string
           tagline: string
           updated_at: string
         }
         Insert: {
           about?: string
+          accent_color?: string
           allow_signup?: boolean
+          certificate_footer?: string
           contact_email?: string
           id?: number
+          logo_url?: string | null
           platform_name?: string
+          primary_color?: string
           tagline?: string
           updated_at?: string
         }
         Update: {
           about?: string
+          accent_color?: string
           allow_signup?: boolean
+          certificate_footer?: string
           contact_email?: string
           id?: number
+          logo_url?: string | null
           platform_name?: string
+          primary_color?: string
           tagline?: string
           updated_at?: string
         }
