@@ -1,64 +1,67 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { History, User, GraduationCap } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Link, useLocation } from "@tanstack/react-router";
+import { Home, User, BarChart3 } from "lucide-react";
+import { useSession } from "@/lib/session";
 
 export function BottomNav() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (pathname.startsWith("/auth")) return null;
+  const location = useLocation();
+  const { user } = useSession();
 
-  const side = [
-    { to: "/record", label: "السجل", icon: History },
-    { to: "/profile", label: "الملف", icon: User },
-  ] as const;
+  if (!user) return null;
 
-  const isHome = pathname === "/";
+  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path);
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 safe-bottom">
-      <div className="mx-auto max-w-lg px-4 pb-2">
-        <div className="relative flex h-16 items-center justify-between rounded-3xl border border-border bg-card/95 px-8 shadow-[var(--shadow-soft)] backdrop-blur">
-          <NavItem {...side[0]} active={pathname.startsWith("/record")} />
-          <div className="w-16" />
-          <NavItem {...side[1]} active={pathname.startsWith("/profile")} />
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md">
+      <div className="mx-auto flex max-w-lg items-center justify-around">
+        <Link
+          to="/"
+          className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs font-semibold transition-colors ${
+            isActive("/") && location.pathname === "/"
+              ? "gold-gradient text-gold-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Home className="h-5 w-5" />
+          <span>الرئيسية</span>
+        </Link>
 
-          <Link
-            to="/"
-            aria-label="الرئيسية"
-            className={cn(
-              "absolute left-1/2 -top-6 flex h-16 w-16 -translate-x-1/2 flex-col items-center justify-center rounded-full border-4 border-background gold-gradient text-gold-foreground transition-transform active:scale-95",
-              isHome ? "shadow-[var(--shadow-gold)]" : "opacity-90",
-            )}
-          >
-            <GraduationCap className="h-6 w-6" />
-            <span className="text-[10px] font-semibold">الرئيسية</span>
-          </Link>
+        <div className="flex flex-1 flex-col items-center gap-1 py-3 text-xs font-semibold text-muted-foreground">
+          <div className="relative">
+            <div className="absolute inset-0 h-6 w-6 rounded-full gold-gradient opacity-20" />
+            <div className="relative h-6 w-6 rounded-full border-2 border-gold bg-card" />
+          </div>
+          <span className="text-[10px]">مِرقاة</span>
         </div>
-      </div>
-    </nav>
-  );
-}
 
-function NavItem({
-  to,
-  label,
-  icon: Icon,
-  active,
-}: {
-  to: string;
-  label: string;
-  icon: typeof User;
-  active: boolean;
-}) {
-  return (
-    <Link
-      to={to}
-      className={cn(
-        "flex w-16 flex-col items-center gap-1 text-xs transition-colors",
-        active ? "text-gold" : "text-muted-foreground",
+        <Link
+          to={user ? "/profile" : "/auth"}
+          className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs font-semibold transition-colors ${
+            isActive("/profile")
+              ? "gold-gradient text-gold-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <User className="h-5 w-5" />
+          <span>ملفي</span>
+        </Link>
+      </div>
+
+      {/* Secondary nav for records */}
+      {user && location.pathname === "/profile" && (
+        <div className="border-t border-border bg-background px-4 py-2">
+          <div className="flex gap-2 text-xs">
+            <button className="rounded-full border border-gold bg-card px-3 py-1 font-semibold text-gold transition-colors hover:bg-gold/10">
+              السجلات
+            </button>
+            <button className="rounded-full border border-border px-3 py-1 font-semibold text-muted-foreground transition-colors hover:bg-card">
+              الشهادات
+            </button>
+            <button className="rounded-full border border-border px-3 py-1 font-semibold text-muted-foreground transition-colors hover:bg-card">
+              الباجات
+            </button>
+          </div>
+        </div>
       )}
-    >
-      <Icon className="h-5 w-5" />
-      {label}
-    </Link>
+    </nav>
   );
 }

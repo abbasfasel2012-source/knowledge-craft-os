@@ -1,0 +1,11 @@
+* text=auto
+.prettierignore
+.gitignore
+.eslintrc.js
+node_modules/
+bun.lock
+build/
+dist/
+.env
+.env.local
+.env.*.local
