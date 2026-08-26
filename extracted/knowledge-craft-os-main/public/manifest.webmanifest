@@ -1,0 +1,79 @@
+{
+  "name": "مِرقاة — منصة التدريب العربية",
+  "short_name": "مِرقاة",
+  "description": "منصة تدريب عربية متكاملة: دورات مصوّرة، مرفقات، مساعد ذكي، شهادات وباجات",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "theme_color": "#1A1815",
+  "background_color": "#F5F1E8",
+  "categories": ["education", "productivity"],
+  "screenshots": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/maskable-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "الدورات",
+      "short_name": "دورات",
+      "description": "عرض جميع الدورات المتاحة",
+      "url": "/?tab=home",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "ملفي الشخصي",
+      "short_name": "ملفي",
+      "description": "إعدادات وبيانات ملفي الشخصي",
+      "url": "/?tab=profile",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
