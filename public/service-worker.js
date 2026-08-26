@@ -1,7 +1,5 @@
-const CACHE_NAME = 'mirqaa-v1';
+const CACHE_NAME = 'mirqaa-v2-91d5fae';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.webmanifest',
   '/favicon.png'
 ];
@@ -44,8 +42,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first strategy for API calls
-  if (url.includes('/api/') || url.includes('supabase')) {
+  // Network-first for navigation (HTML page) requests and API/Supabase calls,
+  // so a new deploy is always picked up instead of serving a stale cached shell.
+  if (request.mode === 'navigate' || url.includes('/api/') || url.includes('supabase')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -64,7 +63,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first strategy for assets
+  // Cache-first strategy for hashed static assets (safe: each build produces new filenames)
   event.respondWith(
     caches.match(request).then((response) => {
       return response || fetch(request).then((response) => {
