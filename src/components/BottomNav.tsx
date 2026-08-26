@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, User, BarChart3 } from "lucide-react";
+import { Home, User } from "lucide-react";
 import { useSession } from "@/lib/session";
 
 export function BottomNav() {

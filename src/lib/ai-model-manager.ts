@@ -39,7 +39,7 @@ export async function analyzeVideoContent(
 }
 
 export async function trainCourseModel(
-  courseId: string,
+  _courseId: string,
   videoData: Array<{
     title: string;
     description: string;
@@ -65,7 +65,7 @@ export async function generateCourseSummary(
 
 export async function generateQuestions(
   videoTitle: string,
-  content: string,
+  _content: string,
   count: number = 5
 ): Promise<string[]> {
   // Generate quiz questions from video content

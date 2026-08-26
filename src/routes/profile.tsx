@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Award, Download, Share2, Calendar, CheckCircle2 } from "lucide-react";
+import { Award, Calendar, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { CertificateCard } from "@/components/CertificateCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export const Route = createFileRoute("/profile")(() => ({
+export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
       { title: "ملفي الشخصي — مِرقاة" },
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/profile")(() => ({
     ],
   }),
   component: ProfilePage,
-}));
+});
 
 function ProfilePage() {
   const { user, logout } = useSession();
@@ -25,6 +25,7 @@ function ProfilePage() {
     enabled: !!user?.id,
     queryKey: ["userStats", user?.id],
     queryFn: async () => {
+      if (!user) throw new Error("يجب تسجيل الدخول");
       const { data, error } = await supabase
         .from("user_stats")
         .select("*")
@@ -40,6 +41,7 @@ function ProfilePage() {
     enabled: !!user?.id,
     queryKey: ["certificates", user?.id],
     queryFn: async () => {
+      if (!user) throw new Error("يجب تسجيل الدخول");
       const { data, error } = await supabase
         .from("certificates")
         .select("*")
@@ -55,6 +57,7 @@ function ProfilePage() {
     enabled: !!user?.id,
     queryKey: ["records", user?.id],
     queryFn: async () => {
+      if (!user) throw new Error("يجب تسجيل الدخول");
       const { data, error } = await supabase
         .from("completion_records")
         .select("*")

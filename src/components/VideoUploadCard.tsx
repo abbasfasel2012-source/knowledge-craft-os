@@ -14,7 +14,7 @@ interface VideoMetadata {
   thumbnail?: File;
 }
 
-export function VideoUploadCard({ onUpload, courseId }: VideoUploadCardProps) {
+export function VideoUploadCard({ onUpload, courseId: _courseId }: VideoUploadCardProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [file, setFile] = useState<File | null>(null);
@@ -76,7 +76,7 @@ export function VideoUploadCard({ onUpload, courseId }: VideoUploadCardProps) {
         setProgress(0);
         setIsUploading(false);
       }, 500);
-    } catch (err) {
+    } catch {
       setError("حدث خطأ في رفع الفيديو");
       setIsUploading(false);
     }

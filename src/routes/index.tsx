@@ -106,7 +106,7 @@ function Home() {
           <h2 className="mb-3 text-sm font-bold">أكمل تعلّمك</h2>
           <div className="flex gap-3 overflow-x-auto pb-1">
             {continueList.map((row, i) => {
-              const c = row.course as { slug: string; title: string; cover_url: string | null } | null;
+              const c = Array.isArray(row.course) ? row.course[0] : row.course;
               if (!c) return null;
               return (
                 <Link
