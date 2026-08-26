@@ -12,16 +12,17 @@ export const Route = createFileRoute("/record")({
 });
 
 function RecordPage() {
-  const { user, loading } = useSession();
+  const { user, isLoading } = useSession();
 
   const { data: enrollments } = useQuery({
     enabled: !!user,
     queryKey: ["my-enrollments", user?.id],
     queryFn: async () => {
+      if (!user) throw new Error("يجب تسجيل الدخول");
       const { data, error } = await supabase
         .from("enrollments")
         .select("progress,completed_at,created_at,course:courses(id,title,slug,cover_url,duration_minutes)")
-        .eq("user_id", user!.id)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -32,10 +33,11 @@ function RecordPage() {
     enabled: !!user,
     queryKey: ["my-saved", user?.id],
     queryFn: async () => {
+      if (!user) throw new Error("يجب تسجيل الدخول");
       const { data, error } = await supabase
         .from("saved_items")
         .select("id,course_id,lesson_id,created_at,course:courses(title,slug,cover_url),lesson:lessons(title)")
-        .eq("user_id", user!.id)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -46,10 +48,11 @@ function RecordPage() {
     enabled: !!user,
     queryKey: ["my-certificates", user?.id],
     queryFn: async () => {
+      if (!user) throw new Error("يجب تسجيل الدخول");
       const { data, error } = await supabase
         .from("certificates")
         .select("code,issued_at,course:courses(title,slug)")
-        .eq("user_id", user!.id)
+        .eq("user_id", user.id)
         .order("issued_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -60,17 +63,18 @@ function RecordPage() {
     enabled: !!user,
     queryKey: ["my-badges", user?.id],
     queryFn: async () => {
+      if (!user) throw new Error("يجب تسجيل الدخول");
       const { data, error } = await supabase
         .from("user_badges")
         .select("earned_at,badge:badges(name,description,icon)")
-        .eq("user_id", user!.id)
+        .eq("user_id", user.id)
         .order("earned_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center"><p className="text-sm text-muted-foreground">جارٍ التحميل...</p></div>;
+  if (isLoading) return <div className="flex min-h-screen items-center justify-center"><p className="text-sm text-muted-foreground">جارٍ التحميل...</p></div>;
 
   if (!user) {
     return (
@@ -96,7 +100,7 @@ function RecordPage() {
         <TabsContent value="history" className="space-y-3">
           <h2 className="text-sm font-bold">الدورات المسجّلة</h2>
           {enrollments?.map((e, i) => {
-            const c = e.course as { id: string; title: string; slug: string; cover_url: string | null; duration_minutes: number } | null;
+            const c = Array.isArray(e.course) ? e.course[0] : e.course;
             if (!c) return null;
             return (
               <Link key={i} to="/course/$slug" params={{ slug: c.slug }}>
@@ -119,7 +123,7 @@ function RecordPage() {
         <TabsContent value="completed" className="space-y-3">
           <h2 className="text-sm font-bold">الدورات المكتملة</h2>
           {enrollments?.filter((e) => e.completed_at).map((e, i) => {
-            const c = e.course as { id: string; title: string; slug: string; cover_url: string | null } | null;
+            const c = Array.isArray(e.course) ? e.course[0] : e.course;
             if (!c) return null;
             return (
               <Link key={i} to="/course/$slug" params={{ slug: c.slug }}>
@@ -128,7 +132,7 @@ function RecordPage() {
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">{c.cover_url && <img src={c.cover_url} alt={c.title} className="h-full w-full object-cover" />}</div>
                     <div className="flex-1">
                       <p className="line-clamp-1 text-sm font-semibold">{c.title}</p>
-                      <p className="mt-1 flex items-center gap-1 text-[10px] text-green-600"><CheckCircle className="h-3 w-3" /> أكملت في {new Date(e.completed_at!).toLocaleDateString("ar")}</p>
+                      <p className="mt-1 flex items-center gap-1 text-[10px] text-green-600"><CheckCircle className="h-3 w-3" /> أكملت في {e.completed_at ? new Date(e.completed_at).toLocaleDateString("ar") : "—"}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -141,8 +145,8 @@ function RecordPage() {
         <TabsContent value="saved" className="space-y-3">
           <h2 className="text-sm font-bold">المحفوظات</h2>
           {savedItems?.map((s, i) => {
-            const c = s.course as { title: string; slug: string; cover_url: string | null } | null;
-            const l = s.lesson as { title: string } | null;
+            const c = Array.isArray(s.course) ? s.course[0] : s.course;
+            const l = Array.isArray(s.lesson) ? s.lesson[0] : s.lesson;
             return (
               <Link key={i} to={c ? "/course/$slug" : "/"} params={c ? { slug: c.slug } : {}}>
                 <Card className="border-border mb-2">
@@ -161,7 +165,7 @@ function RecordPage() {
           <div>
             <h2 className="mb-2 text-sm font-bold flex items-center gap-2"><Award className="h-4 w-4 text-gold" /> الشهادات</h2>
             {certificates?.map((cert, i) => {
-              const c = cert.course as { title: string; slug: string } | null;
+              const c = Array.isArray(cert.course) ? cert.course[0] : cert.course;
               return (
                 <Link key={i} to="/certificates/$code" params={{ code: cert.code }}>
                   <Card className="border-gold/30 bg-accent/20 mb-2">
@@ -180,7 +184,7 @@ function RecordPage() {
             <h2 className="mb-2 text-sm font-bold flex items-center gap-2"><Star className="h-4 w-4 text-gold" /> الشارات</h2>
             <div className="grid grid-cols-2 gap-2">
               {badges?.map((ub, i) => {
-                const b = ub.badge as { name: string; description: string; icon: string } | null;
+                const b = Array.isArray(ub.badge) ? ub.badge[0] : ub.badge;
                 return (
                   <Card key={i} className="border-border bg-card">
                     <CardContent className="flex flex-col items-center gap-1 p-3 text-center">

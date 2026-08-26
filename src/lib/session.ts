@@ -2,7 +2,6 @@
  * Session management hook for authentication
  */
 
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 
@@ -53,7 +52,7 @@ export function useSession() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, authSession) => {
+      async (_event, authSession) => {
         if (authSession?.user) {
           const { data: profile } = await supabase
             .from('profiles')

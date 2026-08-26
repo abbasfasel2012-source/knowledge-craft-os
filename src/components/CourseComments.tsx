@@ -19,7 +19,7 @@ interface CourseCommentsProps {
   onComment?: (content: string) => void;
 }
 
-export function CourseComments({ courseId, comments = [], onComment }: CourseCommentsProps) {
+export function CourseComments({ courseId: _courseId, comments = [], onComment }: CourseCommentsProps) {
   const { user } = useSession();
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
