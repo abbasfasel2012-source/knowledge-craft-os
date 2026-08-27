@@ -20,7 +20,7 @@ export const Route = createFileRoute("/admin/courses/$id")({
 
 function EditCourse() {
   const { id } = Route.useParams();
-  const { user } = useSession();
+
   const queryClient = useQueryClient();
   const [showLessonForm, setShowLessonForm] = useState(false);
 

@@ -56,7 +56,7 @@ export async function trainCourseModel(
 }
 
 export async function generateCourseSummary(
-  courseId: string,
+  _courseId: string,
   videos: Array<{ title: string; description: string }>
 ): Promise<string> {
   // Generate AI-powered course summary
