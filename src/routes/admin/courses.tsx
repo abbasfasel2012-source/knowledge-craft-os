@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
@@ -58,7 +58,7 @@ function AdminCourses() {
 
       <div className="space-y-2">
         {courses?.map((c) => {
-          const cat = c.category as { name: string } | null;
+          const cat = c.category as unknown as { name: string } | null;
           return (
             <Card key={c.id} className="border-border">
               <CardContent className="p-3">

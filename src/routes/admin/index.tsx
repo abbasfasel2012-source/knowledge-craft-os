@@ -23,7 +23,7 @@ function AdminDashboard() {
 
   // Fetch dashboard stats
   const { data: stats, isLoading: statsLoading } = useQuery({
-    enabled: user?.role === "admin",
+    enabled: isStaff(user?.role),
     queryKey: ["admin-stats"],
     queryFn: async () => {
       const { data: coursesCount } = await supabase
@@ -50,7 +50,7 @@ function AdminDashboard() {
 
   // Fetch all courses
   const { data: courses, isLoading: coursesLoading } = useQuery({
-    enabled: user?.role === "admin",
+    enabled: isStaff(user?.role),
     queryKey: ["admin-courses"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -64,7 +64,7 @@ function AdminDashboard() {
 
   // Fetch all users
   const { data: users, isLoading: usersLoading } = useQuery({
-    enabled: user?.role === "admin",
+    enabled: isStaff(user?.role),
     queryKey: ["admin-users"],
     queryFn: async () => {
       const { data, error } = await supabase

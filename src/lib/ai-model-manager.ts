@@ -39,7 +39,7 @@ export async function analyzeVideoContent(
 }
 
 export async function trainCourseModel(
-  _courseId: string,
+  courseId: string,
   videoData: Array<{
     title: string;
     description: string;

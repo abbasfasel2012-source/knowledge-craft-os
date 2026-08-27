@@ -37,8 +37,8 @@ function CertificateVerify() {
     );
   }
 
-  const user = cert.user as { full_name: string } | null;
-  const course = cert.course as { title: string } | null;
+  const user = cert.user as unknown as { full_name: string } | null;
+  const course = cert.course as unknown as { title: string } | null;
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-10">

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,7 @@ function AdminQuizzes() {
 
       <div className="space-y-2">
         {quizzes?.map((q) => {
-          const c = q.course as { title: string } | null;
+          const c = q.course as unknown as { title: string } | null;
           return (
             <Card key={q.id} className="border-border">
               <CardContent className="flex items-center gap-3 p-3">

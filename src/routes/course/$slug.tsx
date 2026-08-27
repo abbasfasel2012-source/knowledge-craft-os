@@ -256,7 +256,7 @@ function CourseDetail() {
       </Tabs>
 
       {/* Admin Upload Section */}
-      {user?.role === "admin" && (
+      {isStaff(user?.role) && (
         <div className="mt-8 border-t border-border pt-6">
           <h3 className="mb-4 text-lg font-bold">إدارة الدورة</h3>
           <VideoUploadCard courseId={course.id} />
