@@ -97,3 +97,14 @@ export function useSession() {
     logout,
   };
 }
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  owner: "المالك",
+  instructor: "مدرّب",
+  moderator: "مشرف",
+  student: "متدرب",
+};
+
+export function isStaff(role?: UserRole | null) {
+  return role === "owner" || role === "instructor" || role === "moderator";
+}

@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Play, Download, Share2, Bookmark, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/lib/session";
+import { isStaff, useSession } from "@/lib/session";
 import { CourseComments } from "@/components/CourseComments";
 import { VideoUploadCard } from "@/components/VideoUploadCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
