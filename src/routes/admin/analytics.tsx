@@ -24,7 +24,7 @@ function AdminAnalytics() {
       ]);
 
       const courseEnrollments = new Map<string, number>();
-      enrollments.data?.forEach((e) => { const c = e.course as { title: string } | null; if (c) courseEnrollments.set(c.title, (courseEnrollments.get(c.title) ?? 0) + 1); });
+      enrollments.data?.forEach((e) => { const c = e.course as unknown as { title: string } | null; if (c) courseEnrollments.set(c.title, (courseEnrollments.get(c.title) ?? 0) + 1); });
       const chartData = Array.from(courseEnrollments.entries()).map(([name, value]) => ({ name, value })).slice(0, 8);
 
       const avgQuizScore = quizzes.data && quizzes.data.length > 0 ? Math.round(quizzes.data.reduce((s, q) => s + (q.max_score > 0 ? (q.score / q.max_score) * 100 : 0), 0) / quizzes.data.length) : 0;

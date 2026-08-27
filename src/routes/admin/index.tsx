@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Plus, Edit, Trash2, Eye, Users, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/lib/session";
+import { isStaff, useSession } from "@/lib/session";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -23,7 +23,7 @@ function AdminDashboard() {
 
   // Fetch dashboard stats
   const { data: stats, isLoading: statsLoading } = useQuery({
-    enabled: user?.role === "admin",
+    enabled: isStaff(user?.role),
     queryKey: ["admin-stats"],
     queryFn: async () => {
       const { data: coursesCount } = await supabase
@@ -50,7 +50,7 @@ function AdminDashboard() {
 
   // Fetch all courses
   const { data: courses, isLoading: coursesLoading } = useQuery({
-    enabled: user?.role === "admin",
+    enabled: isStaff(user?.role),
     queryKey: ["admin-courses"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -64,7 +64,7 @@ function AdminDashboard() {
 
   // Fetch all users
   const { data: users, isLoading: usersLoading } = useQuery({
-    enabled: user?.role === "admin",
+    enabled: isStaff(user?.role),
     queryKey: ["admin-users"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -76,7 +76,7 @@ function AdminDashboard() {
     },
   });
 
-  if (user?.role !== "admin") {
+  if (!isStaff(user?.role)) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4 text-center">
         <div>

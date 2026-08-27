@@ -13,7 +13,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as RecordRouteImport } from './routes/record'
-import { Route as RecordsRouteImport } from './routes/records'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminCoursesRouteImport } from './routes/admin/courses'
@@ -42,11 +41,6 @@ const ProfileRoute = ProfileRouteImport.update({
 const RecordRoute = RecordRouteImport.update({
   id: '/record',
   path: '/record',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecordsRoute = RecordsRouteImport.update({
-  id: '/records',
-  path: '/records',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -100,7 +94,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
-  '/records': typeof RecordsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/quizzes': typeof AdminQuizzesRoute
@@ -116,7 +109,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
-  '/records': typeof RecordsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/quizzes': typeof AdminQuizzesRoute
@@ -133,7 +125,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
-  '/records': typeof RecordsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/quizzes': typeof AdminQuizzesRoute
@@ -151,7 +142,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/profile'
     | '/record'
-    | '/records'
     | '/admin/analytics'
     | '/admin/courses'
     | '/admin/quizzes'
@@ -167,7 +157,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/profile'
     | '/record'
-    | '/records'
     | '/admin/analytics'
     | '/admin/courses'
     | '/admin/quizzes'
@@ -183,7 +172,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/profile'
     | '/record'
-    | '/records'
     | '/admin/analytics'
     | '/admin/courses'
     | '/admin/quizzes'
@@ -200,7 +188,6 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ProfileRoute: typeof ProfileRoute
   RecordRoute: typeof RecordRoute
-  RecordsRoute: typeof RecordsRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminCoursesRoute: typeof AdminCoursesRouteWithChildren
   AdminQuizzesRoute: typeof AdminQuizzesRoute
@@ -239,13 +226,6 @@ declare module '@tanstack/react-router' {
       path: '/record'
       fullPath: '/record'
       preLoaderRoute: typeof RecordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/records': {
-      id: '/records'
-      path: '/records'
-      fullPath: '/records'
-      preLoaderRoute: typeof RecordsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -331,7 +311,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ProfileRoute: ProfileRoute,
   RecordRoute: RecordRoute,
-  RecordsRoute: RecordsRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminCoursesRoute: AdminCoursesRouteWithChildren,
   AdminQuizzesRoute: AdminQuizzesRoute,

@@ -1,67 +1,45 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, User } from "lucide-react";
-import { useSession } from "@/lib/session";
+import { History, Home, User } from "lucide-react";
 
 export function BottomNav() {
   const location = useLocation();
-  const { user } = useSession();
+  const path = location.pathname;
 
-  if (!user) return null;
-
-  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path);
+  const sideItem =
+    "flex flex-1 flex-col items-center gap-1 py-3 text-[11px] font-semibold transition-colors";
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md">
-      <div className="mx-auto flex max-w-lg items-center justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-md safe-area-bottom">
+      <div className="mx-auto flex max-w-lg items-end justify-around px-2">
         <Link
-          to="/"
-          className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs font-semibold transition-colors ${
-            isActive("/") && location.pathname === "/"
-              ? "gold-gradient text-gold-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          to="/record"
+          className={`${sideItem} ${path.startsWith("/record") ? "text-gold" : "text-muted-foreground"}`}
         >
-          <Home className="h-5 w-5" />
-          <span>الرئيسية</span>
+          <History className="h-5 w-5" />
+          <span>السجل</span>
         </Link>
 
-        <div className="flex flex-1 flex-col items-center gap-1 py-3 text-xs font-semibold text-muted-foreground">
-          <div className="relative">
-            <div className="absolute inset-0 h-6 w-6 rounded-full gold-gradient opacity-20" />
-            <div className="relative h-6 w-6 rounded-full border-2 border-gold bg-card" />
+        <Link to="/" className="flex flex-1 flex-col items-center gap-1 pb-2">
+          <div
+            className={`-mt-6 flex h-14 w-14 items-center justify-center rounded-full border-4 border-background shadow-[var(--shadow-soft)] ${
+              path === "/" ? "gold-gradient" : "bg-card border-border"
+            }`}
+          >
+            <Home className={`h-6 w-6 ${path === "/" ? "text-gold-foreground" : "text-muted-foreground"}`} />
           </div>
-          <span className="text-[10px]">مِرقاة</span>
-        </div>
+          <span className={`text-[11px] font-semibold ${path === "/" ? "text-gold" : "text-muted-foreground"}`}>
+            الرئيسية
+          </span>
+        </Link>
 
         <Link
-          to={user ? "/profile" : "/auth"}
-          className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs font-semibold transition-colors ${
-            isActive("/profile")
-              ? "gold-gradient text-gold-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          to="/profile"
+          className={`${sideItem} ${path.startsWith("/profile") ? "text-gold" : "text-muted-foreground"}`}
         >
           <User className="h-5 w-5" />
-          <span>ملفي</span>
+          <span>الملف</span>
         </Link>
       </div>
-
-      {/* Secondary nav for records */}
-      {user && location.pathname === "/profile" && (
-        <div className="border-t border-border bg-background px-4 py-2">
-          <div className="flex gap-2 text-xs">
-            <button className="rounded-full border border-gold bg-card px-3 py-1 font-semibold text-gold transition-colors hover:bg-gold/10">
-              السجلات
-            </button>
-            <button className="rounded-full border border-border px-3 py-1 font-semibold text-muted-foreground transition-colors hover:bg-card">
-              الشهادات
-            </button>
-            <button className="rounded-full border border-border px-3 py-1 font-semibold text-muted-foreground transition-colors hover:bg-card">
-              الباجات
-            </button>
-          </div>
-        </div>
-      )}
     </nav>
   );
 }

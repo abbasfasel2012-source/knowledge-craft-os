@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, X, Upload, Play, FileText, HelpCircle, Link as LinkIcon, Headphones, Trash2 } from "lucide-react";
+import { Plus, X, Upload, Play, FileText, HelpCircle, Link as LinkIcon, Headphones } from "lucide-react";
 
 export const Route = createFileRoute("/admin/courses/$id")({
   head: () => ({ meta: [{ title: "تحرير الدورة — مِرقاة" }] }),
@@ -20,7 +19,7 @@ export const Route = createFileRoute("/admin/courses/$id")({
 
 function EditCourse() {
   const { id } = Route.useParams();
-  const { user } = useSession();
+
   const queryClient = useQueryClient();
   const [showLessonForm, setShowLessonForm] = useState(false);
 
@@ -84,7 +83,7 @@ function EditCourse() {
                   {lesson.type === "video" ? <Play className="h-4 w-4" /> : lesson.type === "pdf" ? <FileText className="h-4 w-4" /> : lesson.type === "quiz" ? <HelpCircle className="h-4 w-4" /> : lesson.type === "link" ? <LinkIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                 </div>
                 <div className="flex-1 min-w-0"><p className="line-clamp-1 text-sm font-medium">{lesson.title}</p><p className="text-[10px] text-muted-foreground">{lesson.type} • {lesson.duration_minutes} د</p></div>
-                <Link to="/learn/$courseId/$lessonId" params={{ courseId: id, lessonId: lesson.id }}><Button variant="outline" size="sm">عرض</Button></Link>
+                
               </CardContent>
             </Card>
           ))}

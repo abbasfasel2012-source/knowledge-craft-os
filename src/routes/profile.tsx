@@ -1,9 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Award, Calendar, CheckCircle2 } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Award, BookOpen, CheckCircle2, LayoutDashboard, Star, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/lib/session";
-import { CertificateCard } from "@/components/CertificateCard";
+import { isStaff, ROLE_LABELS, useSession } from "@/lib/session";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -11,40 +10,47 @@ export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
       { title: "ملفي الشخصي — مِرقاة" },
-      { name: "description", content: "ملفك الشخصي والإحصائيات والشهادات" },
+      { name: "description", content: "ملفك الشخصي وإحصائياتك وشهاداتك وإعداداتك في منصة مِرقاة." },
+      { property: "og:title", content: "ملفي الشخصي — مِرقاة" },
+      { property: "og:description", content: "تابع تقدمك وشهاداتك وإعداداتك." },
     ],
   }),
   component: ProfilePage,
 });
 
 function ProfilePage() {
-  const { user, logout } = useSession();
+  const { user, isLoading, logout } = useSession();
+  const queryClient = useQueryClient();
 
-  // Fetch user stats
-  const { data: userStats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery({
     enabled: !!user?.id,
-    queryKey: ["userStats", user?.id],
+    queryKey: ["profile-stats", user?.id],
     queryFn: async () => {
       if (!user) throw new Error("يجب تسجيل الدخول");
-      const { data, error } = await supabase
-        .from("user_stats")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-      if (error) throw error;
-      return data;
+      const [enrollments, certificates, badges, profile] = await Promise.all([
+        supabase.from("enrollments").select("progress,completed_at").eq("user_id", user.id),
+        supabase.from("certificates").select("id").eq("user_id", user.id),
+        supabase.from("user_badges").select("id").eq("user_id", user.id),
+        supabase.from("profiles").select("points").eq("id", user.id).maybeSingle(),
+      ]);
+      return {
+        courses: enrollments.data?.length ?? 0,
+        completed: enrollments.data?.filter((e) => e.completed_at).length ?? 0,
+        certificates: certificates.data?.length ?? 0,
+        badges: badges.data?.length ?? 0,
+        points: profile.data?.points ?? 0,
+      };
     },
   });
 
-  // Fetch certificates
-  const { data: certificates, isLoading: certificatesLoading } = useQuery({
+  const { data: certificates, isLoading: certLoading } = useQuery({
     enabled: !!user?.id,
-    queryKey: ["certificates", user?.id],
+    queryKey: ["profile-certificates", user?.id],
     queryFn: async () => {
       if (!user) throw new Error("يجب تسجيل الدخول");
       const { data, error } = await supabase
         .from("certificates")
-        .select("*")
+        .select("id,code,issued_at,course:courses(title)")
         .eq("user_id", user.id)
         .order("issued_at", { ascending: false });
       if (error) throw error;
@@ -52,114 +58,120 @@ function ProfilePage() {
     },
   });
 
-  // Fetch completion records
-  const { data: records, isLoading: recordsLoading } = useQuery({
-    enabled: !!user?.id,
-    queryKey: ["records", user?.id],
-    queryFn: async () => {
-      if (!user) throw new Error("يجب تسجيل الدخول");
-      const { data, error } = await supabase
-        .from("completion_records")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("started_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  if (!user) {
+  if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4 text-center">
-        <div>
-          <h2 className="text-xl font-bold">يرجى تسجيل الدخول</h2>
-          <p className="mt-2 text-sm text-muted-foreground">لعرض ملفك الشخصي</p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-sm text-muted-foreground">جارٍ التحميل...</p>
       </div>
     );
   }
 
+  if (!user) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
+        <h1 className="text-xl font-bold">يرجى تسجيل الدخول</h1>
+        <p className="text-sm text-muted-foreground">لعرض ملفك الشخصي</p>
+        <Link to="/auth" className="rounded-full gold-gradient px-5 py-2 text-sm font-medium text-gold-foreground">
+          تسجيل الدخول
+        </Link>
+      </div>
+    );
+  }
+
+  const statItems = [
+    { label: "دورات", value: stats?.courses ?? 0, icon: BookOpen },
+    { label: "مكتملة", value: stats?.completed ?? 0, icon: CheckCircle2 },
+    { label: "شهادات", value: stats?.certificates ?? 0, icon: Award },
+    { label: "نقاط", value: stats?.points ?? 0, icon: Star },
+  ];
+
   return (
     <div className="space-y-6 px-4 py-6">
-      {/* Profile Header */}
       <div className="space-y-4 rounded-2xl border border-border bg-card p-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{user.full_name || user.email}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-bold">{user.full_name || user.email}</h1>
+            <p className="mt-1 truncate text-sm text-muted-foreground">{user.email}</p>
+            <span className="mt-2 inline-block rounded-full bg-gold/10 px-3 py-1 text-xs font-semibold text-gold">
+              {ROLE_LABELS[user.role]}
+            </span>
           </div>
           <div className="rounded-full bg-gold/10 p-3">
             <Award className="h-6 w-6 text-gold" />
           </div>
         </div>
 
-        {/* Stats Grid */}
         {statsLoading ? (
           <div className="grid grid-cols-2 gap-3">
             {[0, 1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-16 rounded-lg" />
             ))}
           </div>
-        ) : userStats ? (
+        ) : (
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-background p-3 text-center">
-              <p className="text-2xl font-bold text-gold">{userStats.total_courses || 0}</p>
-              <p className="mt-1 text-xs text-muted-foreground">دورات</p>
-            </div>
-            <div className="rounded-lg bg-background p-3 text-center">
-              <p className="text-2xl font-bold text-gold">{userStats.completed_courses || 0}</p>
-              <p className="mt-1 text-xs text-muted-foreground">مكتملة</p>
-            </div>
-            <div className="rounded-lg bg-background p-3 text-center">
-              <p className="text-2xl font-bold text-gold">{userStats.total_hours || 0}</p>
-              <p className="mt-1 text-xs text-muted-foreground">ساعات</p>
-            </div>
-            <div className="rounded-lg bg-background p-3 text-center">
-              <p className="text-2xl font-bold text-gold">{userStats.total_certificates || 0}</p>
-              <p className="mt-1 text-xs text-muted-foreground">شهادات</p>
-            </div>
+            {statItems.map((s) => (
+              <div key={s.label} className="rounded-lg bg-background p-3 text-center">
+                <s.icon className="mx-auto h-4 w-4 text-gold" />
+                <p className="mt-1 text-2xl font-bold text-gold">{s.value}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{s.label}</p>
+              </div>
+            ))}
           </div>
-        ) : null}
+        )}
       </div>
 
-      {/* Tabs Section */}
+      {isStaff(user.role) && (
+        <div className="grid grid-cols-2 gap-3">
+          <Link
+            to="/admin"
+            className="flex items-center justify-center gap-2 rounded-xl gold-gradient px-4 py-3 text-sm font-semibold text-gold-foreground"
+          >
+            <LayoutDashboard className="h-4 w-4" /> لوحة التحكم
+          </Link>
+          <Link
+            to="/admin/courses"
+            className="flex items-center justify-center gap-2 rounded-xl border border-gold/40 bg-card px-4 py-3 text-sm font-semibold text-gold"
+          >
+            <Upload className="h-4 w-4" /> رفع دورة
+          </Link>
+        </div>
+      )}
+
       <Tabs defaultValue="certificates" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 rounded-lg bg-card">
-          <TabsTrigger value="certificates">
-            <Award className="h-4 w-4" />
-            <span className="ml-2">الشهادات</span>
-          </TabsTrigger>
-          <TabsTrigger value="records">السجلات</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 rounded-lg bg-card">
+          <TabsTrigger value="certificates">الشهادات</TabsTrigger>
           <TabsTrigger value="settings">الإعدادات</TabsTrigger>
         </TabsList>
 
-        {/* Certificates Tab */}
-        <TabsContent value="certificates" className="space-y-3 mt-4">
-          {certificatesLoading ? (
+        <TabsContent value="certificates" className="mt-4 space-y-3">
+          {certLoading ? (
             <div className="space-y-3">
               {[0, 1].map((i) => (
-                <Skeleton key={i} className="h-32 rounded-2xl" />
+                <Skeleton key={i} className="h-20 rounded-2xl" />
               ))}
             </div>
           ) : certificates && certificates.length > 0 ? (
-            <div className="space-y-3">
-              {certificates.map((cert) => (
-                <CertificateCard
+            certificates.map((cert) => {
+              const course = Array.isArray(cert.course) ? cert.course[0] : cert.course;
+              return (
+                <Link
                   key={cert.id}
-                  title={cert.title}
-                  courseName={cert.course_name}
-                  userName={user.full_name || user.email}
-                  issueDate={new Date(cert.issued_at).toLocaleDateString('ar-SA')}
-                  certificateId={cert.id}
-                  onDownload={() => {
-                    const link = document.createElement('a');
-                    link.href = cert.certificate_url;
-                    link.download = `${cert.title}.pdf`;
-                    link.click();
-                  }}
-                />
-              ))}
-            </div>
+                  to="/certificates/$code"
+                  params={{ code: cert.code }}
+                  className="flex items-center gap-3 rounded-xl border border-gold/30 bg-accent/20 p-3"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full gold-gradient">
+                    <Award className="h-5 w-5 text-gold-foreground" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{course?.title ?? "شهادة"}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      رمز: {cert.code} • {new Date(cert.issued_at).toLocaleDateString("ar")}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })
           ) : (
             <div className="rounded-lg border border-dashed border-border bg-background/50 p-6 text-center">
               <Award className="mx-auto h-8 w-8 text-muted-foreground" />
@@ -168,64 +180,36 @@ function ProfilePage() {
           )}
         </TabsContent>
 
-        {/* Records Tab */}
-        <TabsContent value="records" className="space-y-3 mt-4">
-          {recordsLoading ? (
-            <div className="space-y-2">
-              {[0, 1, 2].map((i) => (
-                <Skeleton key={i} className="h-20 rounded-lg" />
-              ))}
-            </div>
-          ) : records && records.length > 0 ? (
-            <div className="space-y-2">
-              {records.map((record) => (
-                <div key={record.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-                  <div className={`rounded-full p-2 ${
-                    record.status === 'completed' ? 'bg-green-500/10' : 'bg-gold/10'
-                  }`}>
-                    <CheckCircle2 className={`h-4 w-4 ${
-                      record.status === 'completed' ? 'text-green-600' : 'text-gold'
-                    }`} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold">{record.course_title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {record.progress}% • {record.time_spent} دقيقة
-                    </p>
-                  </div>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-dashed border-border bg-background/50 p-6 text-center">
-              <p className="text-sm text-muted-foreground">لا توجد سجلات بعد</p>
-            </div>
-          )}
-        </TabsContent>
-
-        {/* Settings Tab */}
-        <TabsContent value="settings" className="space-y-3 mt-4">
+        <TabsContent value="settings" className="mt-4 space-y-3">
           <div className="space-y-3 rounded-lg border border-border bg-card p-4">
             <div>
-              <label className="text-xs font-semibold text-muted-foreground">الاسم الكامل</label>
-              <p className="mt-1 text-sm font-semibold">{user.full_name || 'لم يتم تعيين'}</p>
+              <p className="text-xs font-semibold text-muted-foreground">الاسم الكامل</p>
+              <p className="mt-1 text-sm font-semibold">{user.full_name || "لم يتم تعيين"}</p>
             </div>
             <div className="border-t border-border pt-3">
-              <label className="text-xs font-semibold text-muted-foreground">البريد الإلكتروني</label>
+              <p className="text-xs font-semibold text-muted-foreground">البريد الإلكتروني</p>
               <p className="mt-1 text-sm font-semibold">{user.email}</p>
             </div>
             <div className="border-t border-border pt-3">
-              <label className="text-xs font-semibold text-muted-foreground">نوع الحساب</label>
-              <p className="mt-1 text-sm font-semibold capitalize">
-                {user.role === 'admin' ? 'مشرف' : 'متدرب'}
-              </p>
+              <p className="text-xs font-semibold text-muted-foreground">نوع الحساب</p>
+              <p className="mt-1 text-sm font-semibold">{ROLE_LABELS[user.role]}</p>
             </div>
           </div>
 
+          <Link
+            to="/record"
+            className="block rounded-lg border border-border bg-card px-4 py-2.5 text-center text-sm font-semibold"
+          >
+            عرض السجل الكامل
+          </Link>
+
           <button
-            onClick={() => logout()}
-            className="w-full rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-500/20"
+            onClick={async () => {
+              await queryClient.cancelQueries();
+              queryClient.clear();
+              await logout();
+            }}
+            className="w-full rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/20"
           >
             تسجيل الخروج
           </button>

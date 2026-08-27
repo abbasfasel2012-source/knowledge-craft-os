@@ -39,7 +39,7 @@ export async function analyzeVideoContent(
 }
 
 export async function trainCourseModel(
-  _courseId: string,
+  courseId: string,
   videoData: Array<{
     title: string;
     description: string;
@@ -56,7 +56,7 @@ export async function trainCourseModel(
 }
 
 export async function generateCourseSummary(
-  courseId: string,
+  _courseId: string,
   videos: Array<{ title: string; description: string }>
 ): Promise<string> {
   // Generate AI-powered course summary
