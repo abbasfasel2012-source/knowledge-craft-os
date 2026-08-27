@@ -76,7 +76,7 @@ function AdminDashboard() {
     },
   });
 
-  if (user?.role !== "admin") {
+  if (!isStaff(user?.role)) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4 text-center">
         <div>
