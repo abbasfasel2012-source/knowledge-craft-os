@@ -40,49 +40,65 @@ function CourseDetail() {
     },
   });
 
-  // Fetch videos
-  const { data: videos, isLoading: videosLoading } = useQuery({
+  // Fetch lessons (videos + other content)
+  const { data: lessons, isLoading: lessonsLoading } = useQuery({
     enabled: !!course?.id,
-    queryKey: ["videos", course?.id],
+    queryKey: ["lessons", course?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("videos")
+        .from("lessons")
         .select("*")
         .eq("course_id", course.id)
-        .order("sequence");
+        .order("position");
       if (error) throw error;
       return data;
     },
   });
 
-  // Fetch course comments
-  const { data: comments } = useQuery({
+  // Fetch course discussion (Q&A)
+  const { data: comments, refetch: refetchComments } = useQuery({
     enabled: !!course?.id,
-    queryKey: ["comments", course?.id],
+    queryKey: ["qna", course?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("comments")
-        .select("*")
+        .from("qna_posts")
+        .select("id, body, created_at, user_id, profiles:user_id(full_name, avatar_url)")
         .eq("course_id", course.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return (data || []).map((row) => ({
+        id: row.id,
+        author: (row.profiles as { full_name?: string } | null)?.full_name || "مستخدم",
+        avatar: (row.profiles as { avatar_url?: string } | null)?.avatar_url,
+        content: row.body,
+        timestamp: new Date(row.created_at).toLocaleDateString("ar"),
+        likes: 0,
+      }));
     },
   });
 
-  // Fetch course materials
-  const { data: materials } = useQuery({
-    enabled: !!course?.id,
-    queryKey: ["materials", course?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("course_materials")
-        .select("*")
-        .eq("course_id", course.id);
-      if (error) throw error;
-      return data;
-    },
-  });
+  const videos = lessons?.filter((l) => l.type === "video");
+  // Materials derived from real lesson attachment fields (no separate materials table exists)
+  const materials = lessons
+    ?.filter((l) => l.pdf_url || l.attachment_url)
+    .map((l) => ({
+      id: l.id,
+      title: l.title,
+      file_url: l.pdf_url || l.attachment_url,
+      file_type: l.pdf_url ? "PDF" : "ملف",
+    }));
+
+  const handleAddComment = async (content: string) => {
+    if (!user || !course) return;
+    const { error } = await supabase
+      .from("qna_posts")
+      .insert({ course_id: course.id, user_id: user.id, body: content });
+    if (error) {
+      console.error("[qna_posts] insert failed", error);
+      return;
+    }
+    refetchComments();
+  };
 
   if (courseLoading) {
     return (
@@ -118,7 +134,7 @@ function CourseDetail() {
               src={currentVideo.video_url}
               controls
               className="w-full h-full object-cover"
-              poster={currentVideo.thumbnail_url || course.cover_url}
+              poster={course.cover_url}
             />
             <div className="absolute right-3 top-3">
               <button className="rounded-lg gold-gradient p-2 text-gold-foreground shadow-lg">
@@ -178,7 +194,7 @@ function CourseDetail() {
 
         {/* Videos Tab */}
         <TabsContent value="videos" className="space-y-3 mt-4">
-          {videosLoading ? (
+          {lessonsLoading ? (
             <div className="space-y-2">
               {[0, 1, 2].map((i) => (
                 <Skeleton key={i} className="h-20 rounded-lg" />
@@ -197,13 +213,6 @@ function CourseDetail() {
                   }`}
                 >
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded bg-muted">
-                    {video.thumbnail_url && (
-                      <img
-                        src={video.thumbnail_url}
-                        alt={video.title}
-                        className="h-full w-full object-cover"
-                      />
-                    )}
                     <Play className="absolute inset-0 m-auto h-4 w-4 text-gold opacity-60" />
                   </div>
                   <div className="min-w-0 flex-1 text-right">
@@ -251,6 +260,7 @@ function CourseDetail() {
           <CourseComments
             courseId={course.id}
             comments={comments || []}
+            onComment={handleAddComment}
           />
         </TabsContent>
       </Tabs>

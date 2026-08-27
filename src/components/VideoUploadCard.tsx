@@ -2,19 +2,19 @@ import { useState, useRef } from "react";
 import { Upload, X, CheckCircle2, AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VideoUploadCardProps {
-  onUpload?: (file: File, metadata: VideoMetadata) => void;
-  courseId?: string;
+  courseId: string;
+  onUploaded?: () => void;
 }
 
 interface VideoMetadata {
   title: string;
   description: string;
-  thumbnail?: File;
 }
 
-export function VideoUploadCard({ onUpload, courseId: _courseId }: VideoUploadCardProps) {
+export function VideoUploadCard({ courseId, onUploaded }: VideoUploadCardProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [file, setFile] = useState<File | null>(null);
@@ -52,32 +52,62 @@ export function VideoUploadCard({ onUpload, courseId: _courseId }: VideoUploadCa
     }
 
     setIsUploading(true);
+    setError("");
     try {
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 90) return prev;
-          return prev + Math.random() * 30;
-        });
-      }, 500);
+      // Upload the actual file to Supabase Storage
+      const path = `video/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("course-media")
+        .upload(path, file, {
+          onUploadProgress: (evt: { loaded: number; total?: number }) => {
+            if (evt.total) setProgress(Math.round((evt.loaded / evt.total) * 90));
+          },
+        } as never);
 
-      // Call the upload handler
-      if (onUpload) {
-        onUpload(file, metadata);
+      if (uploadError) {
+        setError(`فشل الرفع: ${uploadError.message}`);
+        setIsUploading(false);
+        return;
       }
 
-      clearInterval(interval);
-      setProgress(100);
+      setProgress(90);
+      const { data: publicUrlData } = supabase.storage.from("course-media").getPublicUrl(path);
 
-      setTimeout(() => {
-        toast.success("تم رفع الفيديو بنجاح!");
-        setFile(null);
-        setMetadata({ title: "", description: "" });
-        setProgress(0);
+      // Determine next lesson position
+      const { data: existing } = await supabase
+        .from("lessons")
+        .select("position")
+        .eq("course_id", courseId)
+        .order("position", { ascending: false })
+        .limit(1);
+      const nextPos = (existing?.[0]?.position ?? -1) + 1;
+
+      const { error: insertError } = await supabase.from("lessons").insert({
+        course_id: courseId,
+        title: metadata.title,
+        type: "video",
+        content: metadata.description || null,
+        video_url: publicUrlData.publicUrl,
+        duration_minutes: 0,
+        position: nextPos,
+        is_preview: false,
+      });
+
+      if (insertError) {
+        setError(`فشل حفظ الدرس: ${insertError.message}`);
         setIsUploading(false);
-      }, 500);
-    } catch {
-      setError("حدث خطأ في رفع الفيديو");
+        return;
+      }
+
+      setProgress(100);
+      toast.success("تم رفع الفيديو بنجاح!");
+      setFile(null);
+      setMetadata({ title: "", description: "" });
+      setProgress(0);
+      setIsUploading(false);
+      onUploaded?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "حدث خطأ في رفع الفيديو");
       setIsUploading(false);
     }
   };
@@ -170,7 +200,8 @@ export function VideoUploadCard({ onUpload, courseId: _courseId }: VideoUploadCa
               setMetadata({ title: "", description: "" });
               setProgress(0);
             }}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold transition-colors hover:bg-card"
+            disabled={isUploading}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold transition-colors hover:bg-card disabled:opacity-50"
           >
             <X className="h-4 w-4" />
             إلغاء
