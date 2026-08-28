@@ -3,6 +3,7 @@ import { Upload, X, CheckCircle2, AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { calculateVideoDuration, validateVideoFile } from "@/lib/video-optimizer";
 
 interface VideoUploadCardProps {
   courseId: string;
@@ -25,19 +26,13 @@ export function VideoUploadCard({ courseId, onUploaded }: VideoUploadCardProps) 
     description: "",
   });
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    // Validate file size (max 2GB)
-    if (selectedFile.size > 2 * 1024 * 1024 * 1024) {
-      setError("حجم الملف يجب أن لا يتجاوز 2GB");
-      return;
-    }
-
-    // Validate file type
-    if (!selectedFile.type.startsWith("video/")) {
-      setError("يجب اختيار ملف فيديو صحيح");
+    const validation = await validateVideoFile(selectedFile);
+    if (!validation.valid) {
+      setError(validation.error || "ملف فيديو غير صالح");
       return;
     }
 
@@ -88,6 +83,7 @@ export function VideoUploadCard({ courseId, onUploaded }: VideoUploadCardProps) 
         .order("position", { ascending: false })
         .limit(1);
       const nextPos = (existing?.[0]?.position ?? -1) + 1;
+      const durationSeconds = await calculateVideoDuration(file);
 
       const { error: insertError } = await supabase.from("lessons").insert({
         course_id: courseId,
@@ -95,7 +91,7 @@ export function VideoUploadCard({ courseId, onUploaded }: VideoUploadCardProps) 
         type: "video",
         content: metadata.description || null,
         video_url: signedData.signedUrl,
-        duration_minutes: 0,
+        duration_minutes: Math.max(1, Math.round(durationSeconds / 60)),
         position: nextPos,
         is_preview: false,
       });

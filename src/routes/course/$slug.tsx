@@ -26,6 +26,7 @@ function CourseDetail() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [videoError, setVideoError] = useState(false);
 
   // Fetch course
   const { data: course, isLoading: courseLoading } = useQuery({
@@ -124,11 +125,16 @@ function CourseDetail() {
 
   const currentVideo = videos?.[currentVideoIndex];
 
+  const selectVideo = (index: number) => {
+    setCurrentVideoIndex(index);
+    setVideoError(false);
+  };
+
   return (
     <div className="space-y-6 px-4 py-6">
       {/* Video Player Section */}
       <div className="space-y-3">
-        {currentVideo?.video_url ? (
+        {currentVideo?.video_url && !videoError ? (
           <div className="relative overflow-hidden rounded-2xl bg-black aspect-video">
             <video
               ref={videoRef}
@@ -136,11 +142,23 @@ function CourseDetail() {
               controls
               className="w-full h-full object-cover"
               poster={course.cover_url}
+              onError={() => setVideoError(true)}
             />
             <div className="absolute right-3 top-3">
               <button className="rounded-lg gold-gradient p-2 text-gold-foreground shadow-lg">
                 <Play className="h-4 w-4" />
               </button>
+            </div>
+          </div>
+        ) : currentVideo?.video_url && videoError ? (
+          <div className="aspect-video rounded-2xl bg-muted flex items-center justify-center">
+            <div className="text-center px-4">
+              <Play className="mx-auto h-12 w-12 text-muted-foreground" />
+              <p className="mt-2 text-sm font-semibold text-foreground">تعذّر تشغيل هذا الفيديو</p>
+              <p className="mt-1 text-xs text-muted-foreground">الرابط قد يكون منتهياً أو تالفاً.</p>
+              {isStaff(user?.role) && (
+                <p className="mt-1 text-xs text-muted-foreground">أعد رفعه من قسم الرفع أدناه.</p>
+              )}
             </div>
           </div>
         ) : (
@@ -207,7 +225,7 @@ function CourseDetail() {
               {videos.map((video, index) => (
                 <button
                   key={video.id}
-                  onClick={() => setCurrentVideoIndex(index)}
+                  onClick={() => selectVideo(index)}
                   className={`w-full flex gap-3 rounded-lg border p-3 transition-colors ${
                     index === currentVideoIndex
                       ? "border-gold bg-gold/10"
