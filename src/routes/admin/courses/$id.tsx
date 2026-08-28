@@ -109,14 +109,16 @@ function LessonForm({ courseId, onClose, onSaved }: { courseId: string; onClose:
   const [saving, setSaving] = useState(false);
 
   async function handleUpload(field: "video" | "pdf" | "audio", file: File) {
-    const path = `${field}/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("course-media").upload(path, file);
-    if (error) { toast.error(error.message); return; }
-    const { data } = supabase.storage.from("course-media").getPublicUrl(path);
-    if (field === "video") setVideoUrl(data.publicUrl);
-    if (field === "pdf") setPdfUrl(data.publicUrl);
-    if (field === "audio") setAudioUrl(data.publicUrl);
-    toast.success("تم الرفع");
+    try {
+      toast.info("جارٍ الرفع...");
+      const url = await uploadMedia(file, field);
+      if (field === "video") setVideoUrl(url);
+      if (field === "pdf") setPdfUrl(url);
+      if (field === "audio") setAudioUrl(url);
+      toast.success("تم الرفع");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "فشل الرفع");
+    }
   }
 
   async function handleSave() {
