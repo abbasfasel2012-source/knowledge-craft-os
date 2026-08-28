@@ -71,7 +71,14 @@ export function VideoUploadCard({ courseId, onUploaded }: VideoUploadCardProps) 
       }
 
       setProgress(90);
-      const { data: publicUrlData } = supabase.storage.from("course-media").getPublicUrl(path);
+      const { data: signedData, error: signError } = await supabase.storage
+        .from("course-media")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+      if (signError || !signedData?.signedUrl) {
+        setError("تعذّر إنشاء رابط الفيديو");
+        setIsUploading(false);
+        return;
+      }
 
       // Determine next lesson position
       const { data: existing } = await supabase
