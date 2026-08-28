@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, X, Upload, Play, FileText, HelpCircle, Link as LinkIcon, Headphones } from "lucide-react";
+import { uploadMedia } from "@/lib/storage";
 
 export const Route = createFileRoute("/admin/courses/$id")({
   head: () => ({ meta: [{ title: "تحرير الدورة — مِرقاة" }] }),
