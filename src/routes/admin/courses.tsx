@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, Edit3, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { uploadMedia } from "@/lib/storage";
 
 export const Route = createFileRoute("/admin/courses")({
   head: () => ({ meta: [{ title: "إدارة الدورات — مِرقاة" }] }),
