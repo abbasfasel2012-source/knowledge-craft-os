@@ -13,8 +13,9 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, Edit3, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { uploadMedia } from "@/lib/storage";
 
-export const Route = createFileRoute("/admin/courses")({
+export const Route = createFileRoute("/admin/courses/")({
   head: () => ({ meta: [{ title: "إدارة الدورات — مِرقاة" }] }),
   component: AdminCourses,
 });
@@ -102,12 +103,13 @@ function CourseForm({ categories, userId, onClose, onSaved }: {
   const [saving, setSaving] = useState(false);
 
   async function handleUploadCover(file: File) {
-    const path = `covers/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("course-media").upload(path, file);
-    if (error) { toast.error(error.message); return; }
-    const { data } = supabase.storage.from("course-media").getPublicUrl(path);
-    setCoverUrl(data.publicUrl);
-    toast.success("تم رفع الصورة");
+    try {
+      const url = await uploadMedia(file, "covers");
+      setCoverUrl(url);
+      toast.success("تم رفع الصورة");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "فشل الرفع");
+    }
   }
 
   async function handleSave() {
@@ -144,7 +146,10 @@ function CourseForm({ categories, userId, onClose, onSaved }: {
           <Label>صورة الغلاف</Label>
           <div className="flex gap-2">
             <Input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="رابط الصورة أو ارفع" />
-            <label><input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadCover(f); }} /><Button variant="outline" size="icon" asChild><Upload className="h-4 w-4" /></Button></label>
+            <label className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-card hover:bg-muted">
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadCover(f); }} />
+              <Upload className="h-4 w-4" />
+            </label>
           </div>
         </div>
         <Button onClick={handleSave} disabled={saving || !title.trim()} className="w-full gold-gradient text-gold-foreground">{saving ? "جارٍ الحفظ..." : "حفظ الدورة"}</Button>

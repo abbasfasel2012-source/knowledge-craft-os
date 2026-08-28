@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Search, Clock, Star, Sparkles } from "lucide-react";
+import { Search, Clock, Star, Sparkles, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,12 @@ export const Route = createFileRoute("/")({
   }),
   component: Home,
 });
+
+const LEVELS: Record<string, string> = {
+  beginner: "مبتدئ",
+  intermediate: "متوسط",
+  advanced: "متقدم",
+};
 
 function Home() {
   const [q, setQ] = useState("");
@@ -104,7 +110,7 @@ function Home() {
       {continueList && continueList.length > 0 && (
         <section className="mb-6">
           <h2 className="mb-3 text-sm font-bold">أكمل تعلّمك</h2>
-          <div className="flex gap-3 overflow-x-auto pb-1">
+          <div className="scrollbar-hide -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
             {continueList.map((row, i) => {
               const c = Array.isArray(row.course) ? row.course[0] : row.course;
               if (!c) return null;
@@ -132,7 +138,7 @@ function Home() {
       )}
 
       {categories && categories.length > 0 && (
-        <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+        <div className="scrollbar-hide -mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1">
           <Chip active={cat === null} onClick={() => setCat(null)} label="الكل" />
           {categories.map((c) => (
             <Chip key={c.id} active={cat === c.id} onClick={() => setCat(c.id)} label={c.name} />
@@ -161,11 +167,13 @@ function Home() {
               key={c.id}
               to="/course/$slug"
               params={{ slug: c.slug }}
-              className="flex gap-3 rounded-2xl border border-border bg-card p-3 shadow-[var(--shadow-soft)] transition-transform active:scale-[0.99]"
+              className="flex gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-[var(--shadow-soft)] transition-transform active:scale-[0.99]"
             >
-              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted">
-                {c.cover_url && (
+              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
+                {c.cover_url ? (
                   <img src={c.cover_url} alt={c.title} loading="lazy" className="h-full w-full object-cover" />
+                ) : (
+                  <BookOpen className="h-7 w-7 text-muted-foreground/60" />
                 )}
               </div>
               <div className="min-w-0 flex-1">
@@ -176,7 +184,7 @@ function Home() {
                     <Clock className="h-3 w-3" /> {c.duration_minutes} د
                   </span>
                   <span className="flex items-center gap-1">
-                    <Star className="h-3 w-3 text-gold" /> {c.level}
+                    <Star className="h-3 w-3 text-gold" /> {LEVELS[c.level] ?? c.level}
                   </span>
                   <span className="mr-auto rounded-full bg-accent px-2 py-0.5 font-semibold text-accent-foreground">
                     {c.is_free ? "مجاني" : `${c.price} $`}

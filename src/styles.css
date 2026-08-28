@@ -6,20 +6,20 @@
 :root {
   --background: hsl(42 30% 96%);
   --foreground: hsl(20 8% 9%);
-  --card: hsl(0 0% 100%);
+  --card: hsl(42 42% 98%);
   --card-foreground: hsl(20 8% 9%);
   --primary: hsl(42 98% 50%);
   --primary-foreground: hsl(20 8% 9%);
-  --secondary: hsl(20 8% 90%);
+  --secondary: hsl(42 22% 92%);
   --secondary-foreground: hsl(20 8% 9%);
-  --muted: hsl(20 8% 91%);
+  --muted: hsl(42 22% 93%);
   --muted-foreground: hsl(20 8% 35%);
   --accent: hsl(42 98% 50%);
   --accent-foreground: hsl(20 8% 9%);
   --destructive: hsl(0 84% 60%);
   --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(20 8% 85%);
-  --input: hsl(20 8% 85%);
+  --border: hsl(38 18% 87%);
+  --input: hsl(38 18% 87%);
   --ring: hsl(42 98% 50%);
   --gold: hsl(42 98% 50%);
   --gold-foreground: hsl(20 8% 9%);
@@ -65,7 +65,7 @@
   --radius-sm: calc(var(--radius) - 4px);
   --shadow-soft: var(--shadow-soft);
   --font-sans: "IBM Plex Sans Arabic", sans-serif;
-  --font-display: "Tajawal", sans-serif;
+  --font-display: "IBM Plex Sans Arabic", sans-serif;
 }
 
 @keyframes fade-in {
@@ -128,8 +128,14 @@ body {
   overscroll-behavior-y: none;
 }
 
-h1, h2, h3, h4 {
+h1, h2, h3, h4, button, input, textarea, select {
   font-family: var(--font-sans);
+}
+
+/* توحيد سماكة الأيقونات */
+svg.lucide, svg[class*="lucide-"] {
+  stroke-width: 1.75px;
+  flex-shrink: 0;
 }
 
 video {

@@ -15,12 +15,12 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as RecordRouteImport } from './routes/record'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
-import { Route as AdminCoursesRouteImport } from './routes/admin/courses'
 import { Route as AdminQuizzesRouteImport } from './routes/admin/quizzes'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as CertificatesCodeRouteImport } from './routes/certificates/$code'
 import { Route as CourseSlugRouteImport } from './routes/course/$slug'
+import { Route as AdminCoursesIndexRouteImport } from './routes/admin/courses/index'
 import { Route as AdminCoursesIdRouteImport } from './routes/admin/courses/$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,11 +53,6 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   path: '/admin/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminCoursesRoute = AdminCoursesRouteImport.update({
-  id: '/admin/courses',
-  path: '/admin/courses',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminQuizzesRoute = AdminQuizzesRouteImport.update({
   id: '/admin/quizzes',
   path: '/admin/quizzes',
@@ -83,10 +78,15 @@ const CourseSlugRoute = CourseSlugRouteImport.update({
   path: '/course/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminCoursesIndexRoute = AdminCoursesIndexRouteImport.update({
+  id: '/admin/courses/',
+  path: '/admin/courses/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCoursesIdRoute = AdminCoursesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AdminCoursesRoute,
+  id: '/admin/courses/$id',
+  path: '/admin/courses/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -95,7 +95,6 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -103,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/course/$slug': typeof CourseSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
+  '/admin/courses/': typeof AdminCoursesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,7 +110,6 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -118,6 +117,7 @@ export interface FileRoutesByTo {
   '/course/$slug': typeof CourseSlugRoute
   '/admin': typeof AdminIndexRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
+  '/admin/courses': typeof AdminCoursesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -126,7 +126,6 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -134,6 +133,7 @@ export interface FileRoutesById {
   '/course/$slug': typeof CourseSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
+  '/admin/courses/': typeof AdminCoursesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -143,7 +143,6 @@ export interface FileRouteTypes {
     | '/profile'
     | '/record'
     | '/admin/analytics'
-    | '/admin/courses'
     | '/admin/quizzes'
     | '/admin/settings'
     | '/admin/users'
@@ -151,6 +150,7 @@ export interface FileRouteTypes {
     | '/course/$slug'
     | '/admin/'
     | '/admin/courses/$id'
+    | '/admin/courses/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -158,7 +158,6 @@ export interface FileRouteTypes {
     | '/profile'
     | '/record'
     | '/admin/analytics'
-    | '/admin/courses'
     | '/admin/quizzes'
     | '/admin/settings'
     | '/admin/users'
@@ -166,6 +165,7 @@ export interface FileRouteTypes {
     | '/course/$slug'
     | '/admin'
     | '/admin/courses/$id'
+    | '/admin/courses'
   id:
     | '__root__'
     | '/'
@@ -173,7 +173,6 @@ export interface FileRouteTypes {
     | '/profile'
     | '/record'
     | '/admin/analytics'
-    | '/admin/courses'
     | '/admin/quizzes'
     | '/admin/settings'
     | '/admin/users'
@@ -181,6 +180,7 @@ export interface FileRouteTypes {
     | '/course/$slug'
     | '/admin/'
     | '/admin/courses/$id'
+    | '/admin/courses/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -189,13 +189,14 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   RecordRoute: typeof RecordRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
-  AdminCoursesRoute: typeof AdminCoursesRouteWithChildren
   AdminQuizzesRoute: typeof AdminQuizzesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   CertificatesCodeRoute: typeof CertificatesCodeRoute
   CourseSlugRoute: typeof CourseSlugRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminCoursesIdRoute: typeof AdminCoursesIdRoute
+  AdminCoursesIndexRoute: typeof AdminCoursesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -242,13 +243,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/courses': {
-      id: '/admin/courses'
-      path: '/admin/courses'
-      fullPath: '/admin/courses'
-      preLoaderRoute: typeof AdminCoursesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/quizzes': {
       id: '/admin/quizzes'
       path: '/admin/quizzes'
@@ -284,27 +278,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CourseSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/courses/': {
+      id: '/admin/courses/'
+      path: '/admin/courses'
+      fullPath: '/admin/courses/'
+      preLoaderRoute: typeof AdminCoursesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/courses/$id': {
       id: '/admin/courses/$id'
-      path: '/$id'
+      path: '/admin/courses/$id'
       fullPath: '/admin/courses/$id'
       preLoaderRoute: typeof AdminCoursesIdRouteImport
-      parentRoute: typeof AdminCoursesRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface AdminCoursesRouteChildren {
-  AdminCoursesIdRoute: typeof AdminCoursesIdRoute
-}
-
-const AdminCoursesRouteChildren: AdminCoursesRouteChildren = {
-  AdminCoursesIdRoute: AdminCoursesIdRoute,
-}
-
-const AdminCoursesRouteWithChildren = AdminCoursesRoute._addFileChildren(
-  AdminCoursesRouteChildren,
-)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -312,13 +301,14 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   RecordRoute: RecordRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
-  AdminCoursesRoute: AdminCoursesRouteWithChildren,
   AdminQuizzesRoute: AdminQuizzesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
   CertificatesCodeRoute: CertificatesCodeRoute,
   CourseSlugRoute: CourseSlugRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminCoursesIdRoute: AdminCoursesIdRoute,
+  AdminCoursesIndexRoute: AdminCoursesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

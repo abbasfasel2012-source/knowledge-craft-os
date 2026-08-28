@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, X, Upload, Play, FileText, HelpCircle, Link as LinkIcon, Headphones } from "lucide-react";
+import { uploadMedia } from "@/lib/storage";
 
 export const Route = createFileRoute("/admin/courses/$id")({
   head: () => ({ meta: [{ title: "تحرير الدورة — مِرقاة" }] }),
@@ -109,14 +110,16 @@ function LessonForm({ courseId, onClose, onSaved }: { courseId: string; onClose:
   const [saving, setSaving] = useState(false);
 
   async function handleUpload(field: "video" | "pdf" | "audio", file: File) {
-    const path = `${field}/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("course-media").upload(path, file);
-    if (error) { toast.error(error.message); return; }
-    const { data } = supabase.storage.from("course-media").getPublicUrl(path);
-    if (field === "video") setVideoUrl(data.publicUrl);
-    if (field === "pdf") setPdfUrl(data.publicUrl);
-    if (field === "audio") setAudioUrl(data.publicUrl);
-    toast.success("تم الرفع");
+    try {
+      toast.info("جارٍ الرفع...");
+      const url = await uploadMedia(file, field);
+      if (field === "video") setVideoUrl(url);
+      if (field === "pdf") setPdfUrl(url);
+      if (field === "audio") setAudioUrl(url);
+      toast.success("تم الرفع");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "فشل الرفع");
+    }
   }
 
   async function handleSave() {
@@ -143,9 +146,9 @@ function LessonForm({ courseId, onClose, onSaved }: { courseId: string; onClose:
         <div className="space-y-1.5"><Label>النوع</Label><Select value={type} onValueChange={setType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="video">فيديو</SelectItem><SelectItem value="pdf">PDF</SelectItem><SelectItem value="text">نص</SelectItem><SelectItem value="link">رابط</SelectItem><SelectItem value="quiz">اختبار</SelectItem></SelectContent></Select></div>
         <div className="space-y-1.5"><Label>ملخص</Label><Input value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="ملخص قصير" /></div>
         <div className="space-y-1.5"><Label>المحتوى النصي</Label><Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="محتوى الدرس" className="min-h-[80px]" /></div>
-        {type === "video" && <div className="space-y-1.5"><Label>رابط الفيديو</Label><div className="flex gap-2"><Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="رابط الفيديو" /><label><input type="file" accept="video/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload("video", f); }} /><Button variant="outline" size="icon"><Upload className="h-4 w-4" /></Button></label></div></div>}
-        {type === "pdf" && <div className="space-y-1.5"><Label>رابط PDF</Label><div className="flex gap-2"><Input value={pdfUrl} onChange={(e) => setPdfUrl(e.target.value)} placeholder="رابط PDF" /><label><input type="file" accept="application/pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload("pdf", f); }} /><Button variant="outline" size="icon"><Upload className="h-4 w-4" /></Button></label></div></div>}
-        <div className="space-y-1.5"><Label>رابط البودكاست</Label><div className="flex gap-2"><Input value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="رابط الصوت" /><label><input type="file" accept="audio/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload("audio", f); }} /><Button variant="outline" size="icon"><Headphones className="h-4 w-4" /></Button></label></div></div>
+        {type === "video" && <div className="space-y-1.5"><Label>رابط الفيديو</Label><div className="flex gap-2"><Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="رابط الفيديو" /><label className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-card hover:bg-muted"><input type="file" accept="video/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload("video", f); }} /><Upload className="h-4 w-4" /></label></div></div>}
+        {type === "pdf" && <div className="space-y-1.5"><Label>رابط PDF</Label><div className="flex gap-2"><Input value={pdfUrl} onChange={(e) => setPdfUrl(e.target.value)} placeholder="رابط PDF" /><label className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-card hover:bg-muted"><input type="file" accept="application/pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload("pdf", f); }} /><Upload className="h-4 w-4" /></label></div></div>}
+        <div className="space-y-1.5"><Label>رابط البودكاست</Label><div className="flex gap-2"><Input value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="رابط الصوت" /><label className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-card hover:bg-muted"><input type="file" accept="audio/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload("audio", f); }} /><Headphones className="h-4 w-4" /></label></div></div>
         <div className="space-y-1.5"><Label>نص السكربت</Label><Textarea value={scriptText} onChange={(e) => setScriptText(e.target.value)} placeholder="نص السكربت" className="min-h-[60px]" /></div>
         <div className="space-y-1.5"><Label>سياق الذكاء الاصطناعي</Label><Textarea value={aiContext} onChange={(e) => setAiContext(e.target.value)} placeholder="معلومات إضافية للمساعد الذكي" className="min-h-[60px]" /></div>
         <div className="grid grid-cols-2 gap-3">
