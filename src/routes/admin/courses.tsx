@@ -102,12 +102,13 @@ function CourseForm({ categories, userId, onClose, onSaved }: {
   const [saving, setSaving] = useState(false);
 
   async function handleUploadCover(file: File) {
-    const path = `covers/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("course-media").upload(path, file);
-    if (error) { toast.error(error.message); return; }
-    const { data } = supabase.storage.from("course-media").getPublicUrl(path);
-    setCoverUrl(data.publicUrl);
-    toast.success("تم رفع الصورة");
+    try {
+      const url = await uploadMedia(file, "covers");
+      setCoverUrl(url);
+      toast.success("تم رفع الصورة");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "فشل الرفع");
+    }
   }
 
   async function handleSave() {
