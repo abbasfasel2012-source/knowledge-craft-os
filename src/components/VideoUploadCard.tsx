@@ -94,7 +94,7 @@ export function VideoUploadCard({ courseId, onUploaded }: VideoUploadCardProps) 
         title: metadata.title,
         type: "video",
         content: metadata.description || null,
-        video_url: publicUrlData.publicUrl,
+        video_url: signedData.signedUrl,
         duration_minutes: 0,
         position: nextPos,
         is_preview: false,
