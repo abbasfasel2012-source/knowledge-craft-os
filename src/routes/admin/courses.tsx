@@ -146,7 +146,10 @@ function CourseForm({ categories, userId, onClose, onSaved }: {
           <Label>صورة الغلاف</Label>
           <div className="flex gap-2">
             <Input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="رابط الصورة أو ارفع" />
-            <label><input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadCover(f); }} /><Button variant="outline" size="icon" asChild><Upload className="h-4 w-4" /></Button></label>
+            <label className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-card hover:bg-muted">
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadCover(f); }} />
+              <Upload className="h-4 w-4" />
+            </label>
           </div>
         </div>
         <Button onClick={handleSave} disabled={saving || !title.trim()} className="w-full gold-gradient text-gold-foreground">{saving ? "جارٍ الحفظ..." : "حفظ الدورة"}</Button>
