@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isStaff, useSession } from "@/lib/session";
 import { CourseComments } from "@/components/CourseComments";
 import { VideoUploadCard } from "@/components/VideoUploadCard";
+import { LessonAiAssistant } from "@/components/LessonAiAssistant";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -183,13 +184,14 @@ function CourseDetail() {
 
       {/* Tabs Section */}
       <Tabs defaultValue="videos" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 rounded-lg bg-card">
+        <TabsList className="grid w-full grid-cols-4 rounded-lg bg-card">
           <TabsTrigger value="videos">الفيديوهات</TabsTrigger>
           <TabsTrigger value="materials">المرفقات</TabsTrigger>
           <TabsTrigger value="comments">
             <MessageCircle className="h-4 w-4" />
             <span className="ml-2">{comments?.length || 0}</span>
           </TabsTrigger>
+          <TabsTrigger value="ai">المساعد</TabsTrigger>
         </TabsList>
 
         {/* Videos Tab */}
@@ -262,6 +264,11 @@ function CourseDetail() {
             comments={comments || []}
             onComment={handleAddComment}
           />
+        </TabsContent>
+
+        {/* AI Assistant Tab */}
+        <TabsContent value="ai" className="mt-4">
+          <LessonAiAssistant lessons={lessons || []} />
         </TabsContent>
       </Tabs>
 

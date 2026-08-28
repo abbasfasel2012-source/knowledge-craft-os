@@ -4,9 +4,9 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: hsl(42 30% 96%);
+  --background: hsl(42 28% 96%);
   --foreground: hsl(20 8% 9%);
-  --card: hsl(42 42% 98%);
+  --card: hsl(42 28% 96%);
   --card-foreground: hsl(20 8% 9%);
   --primary: hsl(42 98% 50%);
   --primary-foreground: hsl(20 8% 9%);
@@ -30,7 +30,7 @@
 .dark {
   --background: hsl(20 15% 12%);
   --foreground: hsl(42 30% 96%);
-  --card: hsl(20 20% 18%);
+  --card: hsl(20 15% 12%);
   --card-foreground: hsl(42 30% 96%);
   --secondary: hsl(20 8% 24%);
   --secondary-foreground: hsl(42 30% 96%);
