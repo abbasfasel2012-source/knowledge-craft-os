@@ -126,7 +126,12 @@ function QuestionsEditor({ quizId, onClose }: { quizId: string; onClose: () => v
   const { data: questions } = useQuery({
     queryKey: ["quiz-questions-admin", quizId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("questions").select("*").eq("quiz_id", quizId).order("position");
+      // مفتاح الإجابة (correct_answer/explanation) لم يعد يُقرأ عبر الواجهة إطلاقاً — التصحيح يتم على الخادم.
+      const { data, error } = await supabase
+        .from("questions")
+        .select("id, quiz_id, type, prompt, options, points, position")
+        .eq("quiz_id", quizId)
+        .order("position");
       if (error) throw error;
       return data ?? [];
     },
