@@ -21,7 +21,9 @@ function RecordPage() {
       if (!user) throw new Error("يجب تسجيل الدخول");
       const { data, error } = await supabase
         .from("enrollments")
-        .select("progress,completed_at,created_at,course:courses(id,title,slug,cover_url,duration_minutes)")
+        .select(
+          "progress,completed_at,created_at,course:courses(id,title,slug,cover_url,duration_minutes)",
+        )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -36,7 +38,9 @@ function RecordPage() {
       if (!user) throw new Error("يجب تسجيل الدخول");
       const { data, error } = await supabase
         .from("saved_items")
-        .select("id,course_id,lesson_id,created_at,course:courses(title,slug,cover_url),lesson:lessons(title)")
+        .select(
+          "id,course_id,lesson_id,created_at,course:courses(title,slug,cover_url),lesson:lessons(title)",
+        )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -74,13 +78,23 @@ function RecordPage() {
     },
   });
 
-  if (isLoading) return <div className="flex min-h-screen items-center justify-center"><p className="text-sm text-muted-foreground">جارٍ التحميل...</p></div>;
+  if (isLoading)
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-sm text-muted-foreground">جارٍ التحميل...</p>
+      </div>
+    );
 
   if (!user) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <p className="text-sm text-muted-foreground">سجّل دخولك لعرض سجلك.</p>
-        <Link to="/auth" className="rounded-full gold-gradient px-5 py-2 text-sm font-medium text-gold-foreground">تسجيل الدخول</Link>
+        <Link
+          to="/auth"
+          className="rounded-full gold-gradient px-5 py-2 text-sm font-medium text-gold-foreground"
+        >
+          تسجيل الدخول
+        </Link>
       </div>
     );
   }
@@ -91,10 +105,18 @@ function RecordPage() {
 
       <Tabs defaultValue="history" className="w-full">
         <TabsList className="mb-4 grid w-full grid-cols-4">
-          <TabsTrigger value="history" className="text-xs"><History className="h-3 w-3" /></TabsTrigger>
-          <TabsTrigger value="completed" className="text-xs"><CheckCircle className="h-3 w-3" /></TabsTrigger>
-          <TabsTrigger value="saved" className="text-xs"><Bookmark className="h-3 w-3" /></TabsTrigger>
-          <TabsTrigger value="awards" className="text-xs"><Award className="h-3 w-3" /></TabsTrigger>
+          <TabsTrigger value="history" className="text-xs">
+            <History className="h-3 w-3" />
+          </TabsTrigger>
+          <TabsTrigger value="completed" className="text-xs">
+            <CheckCircle className="h-3 w-3" />
+          </TabsTrigger>
+          <TabsTrigger value="saved" className="text-xs">
+            <Bookmark className="h-3 w-3" />
+          </TabsTrigger>
+          <TabsTrigger value="awards" className="text-xs">
+            <Award className="h-3 w-3" />
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="history" className="space-y-3">
@@ -106,10 +128,20 @@ function RecordPage() {
               <Link key={i} to="/course/$slug" params={{ slug: c.slug }}>
                 <Card className="border-border mb-2">
                   <CardContent className="flex gap-3 p-3">
-                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">{c.cover_url && <img src={c.cover_url} alt={c.title} className="h-full w-full object-cover" />}</div>
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+                      {c.cover_url && (
+                        <img
+                          src={c.cover_url}
+                          alt={c.title}
+                          className="h-full w-full object-cover"
+                        />
+                      )}
+                    </div>
                     <div className="flex-1">
                       <p className="line-clamp-1 text-sm font-semibold">{c.title}</p>
-                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full gold-gradient" style={{ width: `${e.progress}%` }} /></div>
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full gold-gradient" style={{ width: `${e.progress}%` }} />
+                      </div>
                       <p className="mt-1 text-[10px] text-muted-foreground">{e.progress}% مكتمل</p>
                     </div>
                   </CardContent>
@@ -117,29 +149,48 @@ function RecordPage() {
               </Link>
             );
           })}
-          {(!enrollments || enrollments.length === 0) && <p className="py-8 text-center text-sm text-muted-foreground">لم تسجّل في أي دورة بعد.</p>}
+          {(!enrollments || enrollments.length === 0) && (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              لم تسجّل في أي دورة بعد.
+            </p>
+          )}
         </TabsContent>
 
         <TabsContent value="completed" className="space-y-3">
           <h2 className="text-sm font-bold">الدورات المكتملة</h2>
-          {enrollments?.filter((e) => e.completed_at).map((e, i) => {
-            const c = Array.isArray(e.course) ? e.course[0] : e.course;
-            if (!c) return null;
-            return (
-              <Link key={i} to="/course/$slug" params={{ slug: c.slug }}>
-                <Card className="border-green-500/30 bg-green-500/5 mb-2">
-                  <CardContent className="flex gap-3 p-3">
-                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">{c.cover_url && <img src={c.cover_url} alt={c.title} className="h-full w-full object-cover" />}</div>
-                    <div className="flex-1">
-                      <p className="line-clamp-1 text-sm font-semibold">{c.title}</p>
-                      <p className="mt-1 flex items-center gap-1 text-[10px] text-green-600"><CheckCircle className="h-3 w-3" /> أكملت في {e.completed_at ? new Date(e.completed_at).toLocaleDateString("ar") : "—"}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-          {(!enrollments || enrollments.filter((e) => e.completed_at).length === 0) && <p className="py-8 text-center text-sm text-muted-foreground">لم تكمل أي دورة بعد.</p>}
+          {enrollments
+            ?.filter((e) => e.completed_at)
+            .map((e, i) => {
+              const c = Array.isArray(e.course) ? e.course[0] : e.course;
+              if (!c) return null;
+              return (
+                <Link key={i} to="/course/$slug" params={{ slug: c.slug }}>
+                  <Card className="border-green-500/30 bg-green-500/5 mb-2">
+                    <CardContent className="flex gap-3 p-3">
+                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+                        {c.cover_url && (
+                          <img
+                            src={c.cover_url}
+                            alt={c.title}
+                            className="h-full w-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="line-clamp-1 text-sm font-semibold">{c.title}</p>
+                        <p className="mt-1 flex items-center gap-1 text-[10px] text-green-600">
+                          <CheckCircle className="h-3 w-3" /> أكملت في{" "}
+                          {e.completed_at ? new Date(e.completed_at).toLocaleDateString("ar") : "—"}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          {(!enrollments || enrollments.filter((e) => e.completed_at).length === 0) && (
+            <p className="py-8 text-center text-sm text-muted-foreground">لم تكمل أي دورة بعد.</p>
+          )}
         </TabsContent>
 
         <TabsContent value="saved" className="space-y-3">
@@ -151,51 +202,79 @@ function RecordPage() {
               <Link key={i} to={c ? "/course/$slug" : "/"} params={c ? { slug: c.slug } : {}}>
                 <Card className="border-border mb-2">
                   <CardContent className="flex gap-3 p-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent"><Bookmark className="h-4 w-4 text-gold" /></div>
-                    <div className="flex-1"><p className="text-sm font-semibold">{l?.title ?? c?.title ?? "عنصر محفوظ"}</p>{c && <p className="text-[10px] text-muted-foreground">{c.title}</p>}</div>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
+                      <Bookmark className="h-4 w-4 text-gold" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">
+                        {l?.title ?? c?.title ?? "عنصر محفوظ"}
+                      </p>
+                      {c && <p className="text-[10px] text-muted-foreground">{c.title}</p>}
+                    </div>
                   </CardContent>
                 </Card>
               </Link>
             );
           })}
-          {(!savedItems || savedItems.length === 0) && <p className="py-8 text-center text-sm text-muted-foreground">لم تحفظ أي عنصر بعد.</p>}
+          {(!savedItems || savedItems.length === 0) && (
+            <p className="py-8 text-center text-sm text-muted-foreground">لم تحفظ أي عنصر بعد.</p>
+          )}
         </TabsContent>
 
         <TabsContent value="awards" className="space-y-4">
           <div>
-            <h2 className="mb-2 text-sm font-bold flex items-center gap-2"><Award className="h-4 w-4 text-gold" /> الشهادات</h2>
+            <h2 className="mb-2 text-sm font-bold flex items-center gap-2">
+              <Award className="h-4 w-4 text-gold" /> الشهادات
+            </h2>
             {certificates?.map((cert, i) => {
               const c = Array.isArray(cert.course) ? cert.course[0] : cert.course;
               return (
                 <Link key={i} to="/certificates/$code" params={{ code: cert.code }}>
                   <Card className="border-gold/30 bg-accent/20 mb-2">
                     <CardContent className="flex items-center gap-3 p-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full gold-gradient"><Award className="h-5 w-5 text-gold-foreground" /></div>
-                      <div className="flex-1"><p className="text-sm font-semibold">{c?.title ?? "شهادة"}</p><p className="text-[10px] text-muted-foreground">رمز: {cert.code}</p></div>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full gold-gradient">
+                        <Award className="h-5 w-5 text-gold-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold">{c?.title ?? "شهادة"}</p>
+                        <p className="text-[10px] text-muted-foreground">رمز: {cert.code}</p>
+                      </div>
                     </CardContent>
                   </Card>
                 </Link>
               );
             })}
-            {(!certificates || certificates.length === 0) && <p className="py-4 text-center text-sm text-muted-foreground">لم تحصل على شهادات بعد.</p>}
+            {(!certificates || certificates.length === 0) && (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                لم تحصل على شهادات بعد.
+              </p>
+            )}
           </div>
 
           <div>
-            <h2 className="mb-2 text-sm font-bold flex items-center gap-2"><Star className="h-4 w-4 text-gold" /> الشارات</h2>
+            <h2 className="mb-2 text-sm font-bold flex items-center gap-2">
+              <Star className="h-4 w-4 text-gold" /> الشارات
+            </h2>
             <div className="grid grid-cols-2 gap-2">
               {badges?.map((ub, i) => {
                 const b = Array.isArray(ub.badge) ? ub.badge[0] : ub.badge;
                 return (
                   <Card key={i} className="border-border bg-card">
                     <CardContent className="flex flex-col items-center gap-1 p-3 text-center">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full gold-gradient"><Award className="h-5 w-5 text-gold-foreground" /></div>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full gold-gradient">
+                        <Award className="h-5 w-5 text-gold-foreground" />
+                      </div>
                       <p className="text-xs font-semibold">{b?.name}</p>
                       <p className="text-[9px] text-muted-foreground">{b?.description}</p>
                     </CardContent>
                   </Card>
                 );
               })}
-              {(!badges || badges.length === 0) && <div className="col-span-2 py-4 text-center text-sm text-muted-foreground">لم تكسب شارات بعد.</div>}
+              {(!badges || badges.length === 0) && (
+                <div className="col-span-2 py-4 text-center text-sm text-muted-foreground">
+                  لم تكسب شارات بعد.
+                </div>
+              )}
             </div>
           </div>
         </TabsContent>

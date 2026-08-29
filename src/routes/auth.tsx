@@ -27,7 +27,10 @@ function AuthPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("مرحباً بك!");
     navigate({ to: "/" });
   }
@@ -41,7 +44,10 @@ function AuthPage() {
       options: { data: { full_name: fullName } },
     });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     if (data.user) {
       toast.success("تم إنشاء حسابك بنجاح!");
       navigate({ to: "/" });
@@ -75,17 +81,37 @@ function AuthPage() {
                   <Label htmlFor="signin-email">البريد الإلكتروني</Label>
                   <div className="relative">
                     <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="signin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="pr-10" />
+                    <Input
+                      id="signin-email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="pr-10"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signin-password">كلمة المرور</Label>
                   <div className="relative">
                     <Lock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="signin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="pr-10" />
+                    <Input
+                      id="signin-password"
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="pr-10"
+                    />
                   </div>
                 </div>
-                <Button type="submit" disabled={loading} className="w-full gold-gradient text-gold-foreground">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full gold-gradient text-gold-foreground"
+                >
                   {loading ? "جارٍ الدخول..." : "دخول"}
                 </Button>
               </form>
@@ -97,24 +123,53 @@ function AuthPage() {
                   <Label htmlFor="signup-name">الاسم الكامل</Label>
                   <div className="relative">
                     <User className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="signup-name" type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="اسمك الكامل" className="pr-10" />
+                    <Input
+                      id="signup-name"
+                      type="text"
+                      required
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="اسمك الكامل"
+                      className="pr-10"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">البريد الإلكتروني</Label>
                   <div className="relative">
                     <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="signup-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="pr-10" />
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="pr-10"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">كلمة المرور</Label>
                   <div className="relative">
                     <Lock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="signup-password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6 أحرف على الأقل" className="pr-10" />
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      required
+                      minLength={6}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="6 أحرف على الأقل"
+                      className="pr-10"
+                    />
                   </div>
                 </div>
-                <Button type="submit" disabled={loading} className="w-full gold-gradient text-gold-foreground">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full gold-gradient text-gold-foreground"
+                >
                   {loading ? "جارٍ الإنشاء..." : "إنشاء حساب"}
                 </Button>
               </form>

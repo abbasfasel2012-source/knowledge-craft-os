@@ -5,11 +5,13 @@
 هذا المشروع يستخدم إعدادات التطوير التالية:
 
 ### بيئة التطوير
+
 - **Node.js**: 18+
 - **Package Manager**: npm / yarn / bun
 - **Runtime**: Vite 5+
 
 ### أساليب البرمجة
+
 - **Type Safety**: TypeScript 5+
 - **UI Framework**: React 19+
 - **Routing**: TanStack Router 1.170+
@@ -18,6 +20,7 @@
 - **Backend**: Supabase
 
 ### أدوات التطوير
+
 - **Linting**: ESLint 9+
 - **Formatting**: Prettier 3+
 - **Package Manager**: Bun (مفضل)
@@ -27,12 +30,14 @@
 ## قواعد الأسلوب
 
 ### التسمية
+
 - **Components**: PascalCase (`CourseCard.tsx`)
 - **Functions**: camelCase (`trackEvent`)
 - **Constants**: UPPER_SNAKE_CASE (`MAX_FILE_SIZE`)
 - **Files**: kebab-case أو PascalCase حسب النوع
 
 ### البنية
+
 ```
 ✅ استخدم functional components مع hooks
 ✅ فصل الـ logic عن الـ UI
@@ -42,6 +47,7 @@
 ```
 
 ### الأداء
+
 ```
 ✅ استخدم React.memo للـ components الثقيلة
 ✅ استخدم useCallback للـ functions
@@ -64,6 +70,7 @@ main
 ```
 
 ### نمط الـ Commit
+
 ```
 type(scope): description
 

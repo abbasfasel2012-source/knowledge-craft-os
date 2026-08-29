@@ -22,7 +22,8 @@ async function callGateway(messages: { role: string; content: string }[]): Promi
   }
 
   if (res.status === 429) return { ok: false, message: "الطلبات كثيرة، حاول بعد قليل." };
-  if (res.status === 402) return { ok: false, message: "رصيد الذكاء الاصطناعي غير كافٍ، يرجى شحنه." };
+  if (res.status === 402)
+    return { ok: false, message: "رصيد الذكاء الاصطناعي غير كافٍ، يرجى شحنه." };
   if (!res.ok) return { ok: false, message: `تعذّر الرد (${res.status}).` };
 
   const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
@@ -75,8 +76,7 @@ export const generateLessonContent = createServerFn({ method: "POST" })
       ai_context:
         "استخرج نقاط المعرفة الأساسية من هذا الدرس بصيغة قائمة عربية مختصرة، لتُستخدم كسياق لمساعد ذكي.",
       description: "اكتب وصفاً تسويقياً عربياً واضحاً (٣-٥ أسطر) لهذه الدورة التدريبية.",
-      quiz:
-        "أنشئ ٥ أسئلة اختيار من متعدد بالعربية حول هذا الدرس. لكل سؤال: نص السؤال، ثم أربعة خيارات مرقمة، ثم سطر «الإجابة: ...».",
+      quiz: "أنشئ ٥ أسئلة اختيار من متعدد بالعربية حول هذا الدرس. لكل سؤال: نص السؤال، ثم أربعة خيارات مرقمة، ثم سطر «الإجابة: ...».",
     };
 
     const result = await callGateway([

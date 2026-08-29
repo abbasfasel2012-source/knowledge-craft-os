@@ -15,7 +15,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 import { isStaff, useSession } from "@/lib/session";
 import { CourseComments } from "@/components/CourseComments";
 import { VideoUploadCard } from "@/components/VideoUploadCard";
@@ -23,6 +23,7 @@ import { LessonAiAssistant } from "@/components/LessonAiAssistant";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { DEMO_COURSES } from "@/lib/demo-data";
 import {
   downloadFile,
   enroll,
@@ -56,12 +57,23 @@ function CourseDetail() {
   const [videoError, setVideoError] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  const demoCourse = DEMO_COURSES.find((c) => c.slug === slug);
+
   const { data: course, isLoading: courseLoading } = useQuery({
     queryKey: ["course", slug],
     queryFn: async () => {
-      const { data, error } = await supabase.from("courses").select("*").eq("slug", slug).maybeSingle();
-      if (error) throw error;
-      return data;
+      if (!isSupabaseConfigured) return demoCourse ?? null;
+      try {
+        const { data, error } = await supabase
+          .from("courses")
+          .select("*")
+          .eq("slug", slug)
+          .maybeSingle();
+        if (error || !data) return demoCourse ?? null;
+        return data;
+      } catch {
+        return demoCourse ?? null;
+      }
     },
   });
 
@@ -71,13 +83,61 @@ function CourseDetail() {
     enabled: !!courseId,
     queryKey: ["lessons", courseId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lessons")
-        .select("*")
-        .eq("course_id", courseId!)
-        .order("position");
-      if (error) throw error;
-      return data ?? [];
+      if (!isSupabaseConfigured || demoCourse?.id === courseId) {
+        return (demoCourse?.lessons ?? []) as unknown as {
+          id: string;
+          course_id: string;
+          title: string;
+          summary: string | null;
+          duration_minutes: number | null;
+          position: number;
+          type: string;
+          video_url?: string | null;
+          audio_url?: string | null;
+          pdf_url?: string | null;
+          attachment_url?: string | null;
+          is_preview?: boolean | null;
+        }[];
+      }
+      try {
+        const { data, error } = await supabase
+          .from("lessons")
+          .select("*")
+          .eq("course_id", courseId!)
+          .order("position");
+        if (error || !data?.length) {
+          return (demoCourse?.lessons ?? []) as unknown as {
+            id: string;
+            course_id: string;
+            title: string;
+            summary: string | null;
+            duration_minutes: number | null;
+            position: number;
+            type: string;
+            video_url?: string | null;
+            audio_url?: string | null;
+            pdf_url?: string | null;
+            attachment_url?: string | null;
+            is_preview?: boolean | null;
+          }[];
+        }
+        return data;
+      } catch {
+        return (demoCourse?.lessons ?? []) as unknown as {
+          id: string;
+          course_id: string;
+          title: string;
+          summary: string | null;
+          duration_minutes: number | null;
+          position: number;
+          type: string;
+          video_url?: string | null;
+          audio_url?: string | null;
+          pdf_url?: string | null;
+          attachment_url?: string | null;
+          is_preview?: boolean | null;
+        }[];
+      }
     },
   });
 
@@ -85,13 +145,17 @@ function CourseDetail() {
     enabled: !!courseId && !!user,
     queryKey: ["enrollment", courseId, user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("enrollments")
-        .select("id,progress,completed_at")
-        .eq("course_id", courseId!)
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      return data;
+      try {
+        const { data } = await supabase
+          .from("enrollments")
+          .select("id,progress,completed_at")
+          .eq("course_id", courseId!)
+          .eq("user_id", user!.id)
+          .maybeSingle();
+        return data;
+      } catch {
+        return null;
+      }
     },
   });
 
@@ -99,12 +163,16 @@ function CourseDetail() {
     enabled: !!courseId && !!user,
     queryKey: ["lesson-progress", courseId, user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("lesson_progress")
-        .select("lesson_id,completed,last_position")
-        .eq("course_id", courseId!)
-        .eq("user_id", user!.id);
-      return data ?? [];
+      try {
+        const { data } = await supabase
+          .from("lesson_progress")
+          .select("lesson_id,completed,last_position")
+          .eq("course_id", courseId!)
+          .eq("user_id", user!.id);
+        return data ?? [];
+      } catch {
+        return [];
+      }
     },
   });
 
@@ -112,14 +180,18 @@ function CourseDetail() {
     enabled: !!courseId && !!user,
     queryKey: ["saved-course", courseId, user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("saved_items")
-        .select("id")
-        .eq("user_id", user!.id)
-        .eq("course_id", courseId!)
-        .is("lesson_id", null)
-        .maybeSingle();
-      return !!data;
+      try {
+        const { data } = await supabase
+          .from("saved_items")
+          .select("id")
+          .eq("user_id", user!.id)
+          .eq("course_id", courseId!)
+          .is("lesson_id", null)
+          .maybeSingle();
+        return !!data;
+      } catch {
+        return false;
+      }
     },
   });
 
@@ -127,15 +199,19 @@ function CourseDetail() {
     enabled: !!courseId && !!user,
     queryKey: ["liked-course", courseId, user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("reactions")
-        .select("id")
-        .eq("user_id", user!.id)
-        .eq("course_id", courseId!)
-        .is("lesson_id", null)
-        .eq("kind", "like")
-        .maybeSingle();
-      return !!data;
+      try {
+        const { data } = await supabase
+          .from("reactions")
+          .select("id")
+          .eq("user_id", user!.id)
+          .eq("course_id", courseId!)
+          .is("lesson_id", null)
+          .eq("kind", "like")
+          .maybeSingle();
+        return !!data;
+      } catch {
+        return false;
+      }
     },
   });
 
@@ -143,13 +219,44 @@ function CourseDetail() {
     enabled: !!courseId,
     queryKey: ["course-quizzes", courseId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("quizzes")
-        .select("id,title,description,pass_score,time_limit_minutes,max_attempts")
-        .eq("course_id", courseId!)
-        .eq("is_active", true)
-        .order("created_at");
-      return data ?? [];
+      if (!isSupabaseConfigured || demoCourse?.id === courseId) {
+        return (demoCourse?.quizzes ?? []) as unknown as {
+          id: string;
+          title: string;
+          description: string | null;
+          pass_score: number;
+          time_limit_minutes: number | null;
+          max_attempts: number | null;
+        }[];
+      }
+      try {
+        const { data } = await supabase
+          .from("quizzes")
+          .select("id,title,description,pass_score,time_limit_minutes,max_attempts")
+          .eq("course_id", courseId!)
+          .eq("is_active", true)
+          .order("created_at");
+        if (!data?.length) {
+          return (demoCourse?.quizzes ?? []) as unknown as {
+            id: string;
+            title: string;
+            description: string | null;
+            pass_score: number;
+            time_limit_minutes: number | null;
+            max_attempts: number | null;
+          }[];
+        }
+        return data;
+      } catch {
+        return (demoCourse?.quizzes ?? []) as unknown as {
+          id: string;
+          title: string;
+          description: string | null;
+          pass_score: number;
+          time_limit_minutes: number | null;
+          max_attempts: number | null;
+        }[];
+      }
     },
   });
 
@@ -157,35 +264,61 @@ function CourseDetail() {
     enabled: !!courseId,
     queryKey: ["qna", courseId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("qna_posts")
-        .select("id, body, created_at, user_id, profiles:user_id(full_name, avatar_url)")
-        .eq("course_id", courseId!)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data || []).map((row) => ({
-        id: row.id,
-        author: (row.profiles as { full_name?: string } | null)?.full_name || "مستخدم",
-        avatar: (row.profiles as { avatar_url?: string } | null)?.avatar_url,
-        content: row.body,
-        timestamp: new Date(row.created_at).toLocaleDateString("ar"),
-        likes: 0,
-      }));
+      try {
+        const { data, error } = await supabase
+          .from("qna_posts")
+          .select("id, body, created_at, user_id, profiles:user_id(full_name, avatar_url)")
+          .eq("course_id", courseId!)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return (data || []).map((row) => ({
+          id: row.id,
+          author: (row.profiles as { full_name?: string } | null)?.full_name || "مستخدم",
+          avatar: (row.profiles as { avatar_url?: string } | null)?.avatar_url,
+          content: row.body,
+          timestamp: new Date(row.created_at).toLocaleDateString("ar"),
+          likes: 0,
+        }));
+      } catch {
+        return [
+          {
+            id: "c-demo-1",
+            author: "أحمد المنصوري",
+            avatar: undefined,
+            content: "دورة ممتازة وشرح وافي ومبسط، شكراً جزيلاً!",
+            timestamp: "اليوم",
+            likes: 4,
+          },
+        ];
+      }
     },
   });
 
   const playable = lessons?.filter((l) => l.video_url || l.audio_url) ?? [];
   const current = playable[currentIndex];
-  const completedIds = new Set((progressRows ?? []).filter((p) => p.completed).map((p) => p.lesson_id));
+  const completedIds = new Set(
+    (progressRows ?? []).filter((p) => p.completed).map((p) => p.lesson_id),
+  );
   const materials = (lessons ?? [])
     .flatMap((l) => [
-      l.pdf_url ? { id: `${l.id}-pdf`, title: `${l.title} — ملف PDF`, url: l.pdf_url, kind: "PDF" } : null,
-      l.attachment_url ? { id: `${l.id}-att`, title: `${l.title} — مرفق`, url: l.attachment_url, kind: "مرفق" } : null,
-      l.audio_url ? { id: `${l.id}-aud`, title: `${l.title} — بودكاست`, url: l.audio_url, kind: "صوت" } : null,
+      l.pdf_url
+        ? { id: `${l.id}-pdf`, title: `${l.title} — ملف PDF`, url: l.pdf_url, kind: "PDF" }
+        : null,
+      l.attachment_url
+        ? { id: `${l.id}-att`, title: `${l.title} — مرفق`, url: l.attachment_url, kind: "مرفق" }
+        : null,
+      l.audio_url
+        ? { id: `${l.id}-aud`, title: `${l.title} — بودكاست`, url: l.audio_url, kind: "صوت" }
+        : null,
     ])
     .filter(Boolean) as { id: string; title: string; url: string; kind: string }[];
   if (course?.brochure_url) {
-    materials.unshift({ id: "brochure", title: "كتيّب الدورة", url: course.brochure_url, kind: "PDF" });
+    materials.unshift({
+      id: "brochure",
+      title: "كتيّب الدورة",
+      url: course.brochure_url,
+      kind: "PDF",
+    });
   }
 
   useEffect(() => {
@@ -321,7 +454,9 @@ function CourseDetail() {
       <div className="flex min-h-screen items-center justify-center px-4 text-center">
         <div>
           <h2 className="text-xl font-bold">الدورة غير موجودة</h2>
-          <p className="mt-2 text-sm text-muted-foreground">عذراً، لا يمكننا العثور على هذه الدورة.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            عذراً، لا يمكننا العثور على هذه الدورة.
+          </p>
         </div>
       </div>
     );
@@ -377,8 +512,13 @@ function CourseDetail() {
 
       {/* الإجراءات */}
       {!enrollment ? (
-        <Button onClick={handleEnroll} disabled={busy} className="w-full gold-gradient text-gold-foreground">
-          <GraduationCap className="h-4 w-4" /> {course.is_free ? "التسجيل مجاناً" : "التسجيل في الدورة"}
+        <Button
+          onClick={handleEnroll}
+          disabled={busy}
+          className="w-full gold-gradient text-gold-foreground"
+        >
+          <GraduationCap className="h-4 w-4" />{" "}
+          {course.is_free ? "التسجيل مجاناً" : "التسجيل في الدورة"}
         </Button>
       ) : (
         current && (
@@ -386,7 +526,9 @@ function CourseDetail() {
             onClick={handleComplete}
             disabled={busy || completedIds.has(current.id)}
             variant={completedIds.has(current.id) ? "outline" : "default"}
-            className={completedIds.has(current.id) ? "w-full" : "w-full gold-gradient text-gold-foreground"}
+            className={
+              completedIds.has(current.id) ? "w-full" : "w-full gold-gradient text-gold-foreground"
+            }
           >
             <CheckCircle2 className="h-4 w-4" />
             {completedIds.has(current.id) ? "هذا الدرس مكتمل" : "تعليم الدرس كمكتمل"}
@@ -395,9 +537,24 @@ function CourseDetail() {
       )}
 
       <div className="flex gap-2">
-        <ActionButton active={!!saved} onClick={handleSave} icon={<Bookmark className="h-4 w-4" />} label={saved ? "محفوظ" : "حفظ"} />
-        <ActionButton active={!!liked} onClick={handleLike} icon={<Heart className="h-4 w-4" />} label={liked ? "أعجبني" : "إعجاب"} />
-        <ActionButton active={false} onClick={handleShare} icon={<Share2 className="h-4 w-4" />} label="مشاركة" />
+        <ActionButton
+          active={!!saved}
+          onClick={handleSave}
+          icon={<Bookmark className="h-4 w-4" />}
+          label={saved ? "محفوظ" : "حفظ"}
+        />
+        <ActionButton
+          active={!!liked}
+          onClick={handleLike}
+          icon={<Heart className="h-4 w-4" />}
+          label={liked ? "أعجبني" : "إعجاب"}
+        />
+        <ActionButton
+          active={false}
+          onClick={handleShare}
+          icon={<Share2 className="h-4 w-4" />}
+          label="مشاركة"
+        />
       </div>
 
       <Tabs defaultValue="lessons" className="w-full">
@@ -450,13 +607,23 @@ function CourseDetail() {
                     <p className="text-xs text-muted-foreground">
                       {lesson.duration_minutes} د{lesson.is_preview ? " • معاينة مجانية" : ""}
                     </p>
-                    {lesson.summary && <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{lesson.summary}</p>}
+                    {lesson.summary && (
+                      <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
+                        {lesson.summary}
+                      </p>
+                    )}
                   </div>
                 </button>
               );
             })
           ) : (
-            <EmptyBox text={enrollment || isStaff(user?.role) ? "لا توجد دروس بعد" : "سجّل في الدورة لعرض الدروس"} />
+            <EmptyBox
+              text={
+                enrollment || isStaff(user?.role)
+                  ? "لا توجد دروس بعد"
+                  : "سجّل في الدورة لعرض الدروس"
+              }
+            />
           )}
         </TabsContent>
 
@@ -506,7 +673,11 @@ function CourseDetail() {
         </TabsContent>
 
         <TabsContent value="comments" className="mt-4">
-          <CourseComments courseId={course.id} comments={comments || []} onComment={handleAddComment} />
+          <CourseComments
+            courseId={course.id}
+            comments={comments || []}
+            onComment={handleAddComment}
+          />
         </TabsContent>
 
         <TabsContent value="ai" className="mt-4">
@@ -548,7 +719,9 @@ function ActionButton({
     <button
       onClick={onClick}
       className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold transition-colors ${
-        active ? "gold-gradient border-transparent text-gold-foreground" : "border-border bg-card text-foreground hover:bg-muted"
+        active
+          ? "gold-gradient border-transparent text-gold-foreground"
+          : "border-border bg-card text-foreground hover:bg-muted"
       }`}
     >
       {icon}

@@ -19,7 +19,11 @@ interface CourseCommentsProps {
   onComment?: (content: string) => void;
 }
 
-export function CourseComments({ courseId: _courseId, comments = [], onComment }: CourseCommentsProps) {
+export function CourseComments({
+  courseId: _courseId,
+  comments = [],
+  onComment,
+}: CourseCommentsProps) {
   const { user } = useSession();
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,7 +66,10 @@ export function CourseComments({ courseId: _courseId, comments = [], onComment }
 
       {/* Comment Form */}
       {user && (
-        <form onSubmit={handleSubmit} className="space-y-2 rounded-xl border border-border bg-card p-3">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-2 rounded-xl border border-border bg-card p-3"
+        >
           <div className="flex gap-2">
             <Avatar className="h-8 w-8">
               <AvatarImage src={user.avatar_url} />

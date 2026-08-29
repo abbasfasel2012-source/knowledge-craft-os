@@ -7,8 +7,8 @@ export interface CompletionRecord {
   courseId: string;
   videoId?: string;
   userId: string;
-  type: 'course' | 'video' | 'quiz' | 'certificate';
-  status: 'in_progress' | 'completed' | 'abandoned';
+  type: "course" | "video" | "quiz" | "certificate";
+  status: "in_progress" | "completed" | "abandoned";
   progress: number; // 0-100
   startedAt: Date;
   completedAt?: Date;
@@ -31,15 +31,15 @@ export interface UserStats {
 export function createCompletionRecord(
   userId: string,
   courseId: string,
-  videoId?: string
+  videoId?: string,
 ): CompletionRecord {
   return {
     id: `completion_${Date.now()}`,
     courseId,
     videoId,
     userId,
-    type: videoId ? 'video' : 'course',
-    status: 'in_progress',
+    type: videoId ? "video" : "course",
+    status: "in_progress",
     progress: 0,
     startedAt: new Date(),
     timeSpent: 0,
@@ -48,34 +48,28 @@ export function createCompletionRecord(
 
 export function updateCompletionRecord(
   record: CompletionRecord,
-  updates: Partial<CompletionRecord>
+  updates: Partial<CompletionRecord>,
 ): CompletionRecord {
   return { ...record, ...updates };
 }
 
 export function calculateCompletionPercentage(
   watchedSeconds: number,
-  totalSeconds: number
+  totalSeconds: number,
 ): number {
   if (totalSeconds === 0) return 0;
   return Math.min(100, Math.round((watchedSeconds / totalSeconds) * 100));
 }
 
 export function calculateUserStats(records: CompletionRecord[]): UserStats {
-  const userId = records[0]?.userId || '';
+  const userId = records[0]?.userId || "";
   const completedCourses = new Set(
-    records
-      .filter((r) => r.type === 'course' && r.status === 'completed')
-      .map((r) => r.courseId)
+    records.filter((r) => r.type === "course" && r.status === "completed").map((r) => r.courseId),
   );
 
-  const totalHours = Math.round(
-    records.reduce((sum, r) => sum + r.timeSpent, 0) / 3600
-  );
+  const totalHours = Math.round(records.reduce((sum, r) => sum + r.timeSpent, 0) / 3600);
 
-  const certificates = records.filter(
-    (r) => r.type === 'certificate' && r.status === 'completed'
-  );
+  const certificates = records.filter((r) => r.type === "certificate" && r.status === "completed");
 
   return {
     userId,
@@ -85,9 +79,7 @@ export function calculateUserStats(records: CompletionRecord[]): UserStats {
     totalCertificates: certificates.length,
     totalBadges: 0, // Calculated separately
     averageCompletionRate:
-      records.length > 0
-        ? records.reduce((sum, r) => sum + r.progress, 0) / records.length
-        : 0,
+      records.length > 0 ? records.reduce((sum, r) => sum + r.progress, 0) / records.length : 0,
     lastActivityDate: new Date(),
   };
 }

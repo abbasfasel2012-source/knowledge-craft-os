@@ -25,9 +25,13 @@ export function BottomNav() {
               path === "/" ? "gold-gradient" : "bg-card border-border"
             }`}
           >
-            <Home className={`h-6 w-6 ${path === "/" ? "text-gold-foreground" : "text-muted-foreground"}`} />
+            <Home
+              className={`h-6 w-6 ${path === "/" ? "text-gold-foreground" : "text-muted-foreground"}`}
+            />
           </div>
-          <span className={`text-[11px] font-semibold ${path === "/" ? "text-gold" : "text-muted-foreground"}`}>
+          <span
+            className={`text-[11px] font-semibold ${path === "/" ? "text-gold" : "text-muted-foreground"}`}
+          >
             الرئيسية
           </span>
         </Link>

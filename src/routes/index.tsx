@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Search, Clock, Star, Sparkles, BookOpen } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Search, Clock, Star, Sparkles, BookOpen, Database } from "lucide-react";
+import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/session";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DEMO_CATEGORIES, DEMO_COURSES } from "@/lib/demo-data";
 import logo from "@/assets/logo.png";
 
 export const Route = createFileRoute("/")({
@@ -39,9 +40,17 @@ function Home() {
   const { data: categories } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("categories").select("id,name,slug").order("name");
-      if (error) throw error;
-      return data;
+      if (!isSupabaseConfigured) return DEMO_CATEGORIES;
+      try {
+        const { data, error } = await supabase
+          .from("categories")
+          .select("id,name,slug")
+          .order("name");
+        if (error || !data?.length) return DEMO_CATEGORIES;
+        return data;
+      } catch {
+        return DEMO_CATEGORIES;
+      }
     },
   });
 
@@ -50,16 +59,45 @@ function Home() {
   const { data: courses, isLoading } = useQuery({
     queryKey: ["courses", cat, q],
     queryFn: async () => {
-      let query = supabase
-        .from("courses")
-        .select("id,title,slug,summary,cover_url,level,duration_minutes,is_free,price")
-        .eq("status", "published")
-        .order("created_at", { ascending: false });
-      if (cat) query = query.eq("category_id", cat);
-      if (q.trim()) query = query.ilike("title", `%${q.trim()}%`);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      if (!isSupabaseConfigured) {
+        let list = DEMO_COURSES;
+        if (cat) list = list.filter((c) => c.category_id === cat);
+        if (q.trim()) {
+          const search = q.trim().toLowerCase();
+          list = list.filter(
+            (c) =>
+              c.title.toLowerCase().includes(search) || c.summary.toLowerCase().includes(search),
+          );
+        }
+        return list;
+      }
+
+      try {
+        let query = supabase
+          .from("courses")
+          .select("id,title,slug,summary,cover_url,level,duration_minutes,is_free,price")
+          .eq("status", "published")
+          .order("created_at", { ascending: false });
+        if (cat) query = query.eq("category_id", cat);
+        if (q.trim()) query = query.ilike("title", `%${q.trim()}%`);
+        const { data, error } = await query;
+        if (error || !data?.length) {
+          // fallback to demo courses if table is empty or error
+          let list = DEMO_COURSES;
+          if (cat) list = list.filter((c) => c.category_id === cat);
+          if (q.trim()) {
+            const search = q.trim().toLowerCase();
+            list = list.filter(
+              (c) =>
+                c.title.toLowerCase().includes(search) || c.summary.toLowerCase().includes(search),
+            );
+          }
+          return list;
+        }
+        return data;
+      } catch {
+        return DEMO_COURSES;
+      }
     },
   });
 
@@ -67,13 +105,17 @@ function Home() {
     enabled: !!user,
     queryKey: ["continue", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("enrollments")
-        .select("progress, course:courses(id,title,slug,cover_url)")
-        .order("created_at", { ascending: false })
-        .limit(5);
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase
+          .from("enrollments")
+          .select("progress, course:courses(id,title,slug,cover_url)")
+          .order("created_at", { ascending: false })
+          .limit(5);
+        if (error) return [];
+        return data ?? [];
+      } catch {
+        return [];
+      }
     },
   });
 
@@ -96,6 +138,19 @@ function Home() {
           </Link>
         )}
       </header>
+
+      {!isSupabaseConfigured && (
+        <div className="mb-5 flex items-center gap-3 rounded-2xl border border-gold/40 bg-accent/20 p-3.5 text-xs text-foreground">
+          <Database className="h-5 w-5 shrink-0 text-gold" />
+          <div className="flex-1">
+            <p className="font-bold">وضع العرض التجريبي التفاعلي (مفعل محلياً)</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              الدورات والدروس والاختبارات تعمل الآن ببيانات تجريبية كاملة. لربط قاعدة بيانات
+              Supabase سحابية حية، أضف مفاتيح Supabase في ملف الإعدادات البيئية.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="relative mb-5">
         <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -171,7 +226,12 @@ function Home() {
             >
               <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
                 {c.cover_url ? (
-                  <img src={c.cover_url} alt={c.title} loading="lazy" className="h-full w-full object-cover" />
+                  <img
+                    src={c.cover_url}
+                    alt={c.title}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <BookOpen className="h-7 w-7 text-muted-foreground/60" />
                 )}

@@ -40,8 +40,8 @@ export function LessonAiAssistant({ lessons }: { lessons: LessonLike[] }) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isLoading]);
 
-  const hasPdfOrAudio = lessons.some(
-    (l) => (l.pdf_url || l.attachment_url || "").match(/\.(pdf|mp3)(\?|$)/i)
+  const hasPdfOrAudio = lessons.some((l) =>
+    (l.pdf_url || l.attachment_url || "").match(/\.(pdf|mp3)(\?|$)/i),
   );
 
   const handleAsk = async (e: React.FormEvent) => {
@@ -55,7 +55,7 @@ export function LessonAiAssistant({ lessons }: { lessons: LessonLike[] }) {
 
     try {
       const attachmentTexts = await Promise.all(
-        lessons.map((l) => fetchTextAttachment(l.attachment_url || l.pdf_url))
+        lessons.map((l) => fetchTextAttachment(l.attachment_url || l.pdf_url)),
       );
       const context = lessons
         .map((l, i) => {
@@ -71,12 +71,18 @@ export function LessonAiAssistant({ lessons }: { lessons: LessonLike[] }) {
       const result = await askLessonAI({ data: { question: q, context, title } });
 
       if (result.ok) {
-        setMessages((prev) => [...prev, { role: "assistant", text: result.answer || "لم أجد إجابة واضحة." }]);
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", text: result.answer || "لم أجد إجابة واضحة." },
+        ]);
       } else {
         setMessages((prev) => [...prev, { role: "assistant", text: result.message }]);
       }
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", text: "حدث خطأ أثناء الاتصال بالمساعد. حاول مرة أخرى." }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: "حدث خطأ أثناء الاتصال بالمساعد. حاول مرة أخرى." },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +96,8 @@ export function LessonAiAssistant({ lessons }: { lessons: LessonLike[] }) {
       </div>
       <p className="text-xs text-muted-foreground">
         يجيب المساعد بالاعتماد على محتوى الدرس النصي ومرفقاته. يمكنك سؤاله عن أي نقطة لم تفهمها.
-        {hasPdfOrAudio && " تحليل ملفات PDF والصوت (mp3) قيد التطوير حالياً — الإجابات تعتمد الآن على النص المتاح فقط."}
+        {hasPdfOrAudio &&
+          " تحليل ملفات PDF والصوت (mp3) قيد التطوير حالياً — الإجابات تعتمد الآن على النص المتاح فقط."}
       </p>
 
       <div

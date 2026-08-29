@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 interface InteractionEvent {
-  type: 'play' | 'pause' | 'seek' | 'like' | 'comment' | 'share' | 'view';
+  type: "play" | "pause" | "seek" | "like" | "comment" | "share" | "view";
   timestamp: number;
   metadata?: Record<string, unknown>;
 }
@@ -43,7 +43,7 @@ export function InteractionTracker({
   useEffect(() => {
     // Track page view
     trackEvent({
-      type: 'view',
+      type: "view",
       timestamp: Date.now(),
       metadata: { courseId, videoId, userId },
     });

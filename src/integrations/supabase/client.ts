@@ -4,17 +4,23 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "./types";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const rawUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL;
+const rawKey =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.SUPABASE_PUBLISHABLE_KEY;
 
-if (!supabaseUrl || !supabasePublishableKey) {
-  throw new Error(
-    "Supabase URL and publishable key are required. Please check your .env file."
-  );
-}
+export const isSupabaseConfigured = Boolean(
+  rawUrl && rawKey && !rawUrl.includes("placeholder") && !rawUrl.includes("example.supabase.co"),
+);
 
-export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
+const supabaseUrl = rawUrl || "https://demo-training-platform.supabase.co";
+const supabasePublishableKey =
+  rawKey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_anon_key_for_preview";
+
+export const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -32,10 +38,16 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
 });
 
 // Setup auth state persistence
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === "SIGNED_IN" || event === "USER_UPDATED") {
-    localStorage.setItem("supabase.auth", JSON.stringify(session));
-  } else if (event === "SIGNED_OUT") {
-    localStorage.removeItem("supabase.auth");
-  }
-});
+if (typeof window !== "undefined") {
+  supabase.auth.onAuthStateChange((event, session) => {
+    try {
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+        localStorage.setItem("supabase.auth", JSON.stringify(session));
+      } else if (event === "SIGNED_OUT") {
+        localStorage.removeItem("supabase.auth");
+      }
+    } catch {
+      // ignore storage errors
+    }
+  });
+}

@@ -22,7 +22,8 @@ export default defineConfig({
               if (id.includes("react-dom") || id.includes("/react/")) return "vendor";
               if (id.includes("@tanstack/react-router")) return "router";
               if (id.includes("@tanstack/react-query")) return "query";
-              if (id.includes("@radix-ui/react-dialog") || id.includes("@radix-ui/react-tabs")) return "ui";
+              if (id.includes("@radix-ui/react-dialog") || id.includes("@radix-ui/react-tabs"))
+                return "ui";
             }
           },
         },

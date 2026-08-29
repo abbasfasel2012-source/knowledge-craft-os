@@ -35,27 +35,23 @@ export function CertificateCard({
       </div>
 
       <div className="space-y-1 text-xs text-muted-foreground">
-        <p>الاسم: <span className="font-semibold text-foreground">{userName}</span></p>
-        <p>تاريخ الإصدار: <span className="font-semibold text-foreground">{issueDate}</span></p>
-        <p>معرّف الشهادة: <span className="font-mono text-[10px]">{certificateId}</span></p>
+        <p>
+          الاسم: <span className="font-semibold text-foreground">{userName}</span>
+        </p>
+        <p>
+          تاريخ الإصدار: <span className="font-semibold text-foreground">{issueDate}</span>
+        </p>
+        <p>
+          معرّف الشهادة: <span className="font-mono text-[10px]">{certificateId}</span>
+        </p>
       </div>
 
       <div className="flex gap-2 pt-2">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={onDownload}
-          className="flex-1 text-xs"
-        >
+        <Button size="sm" variant="outline" onClick={onDownload} className="flex-1 text-xs">
           <Download className="h-3 w-3" />
           تحميل
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={onShare}
-          className="flex-1 text-xs"
-        >
+        <Button size="sm" variant="outline" onClick={onShare} className="flex-1 text-xs">
           <Share2 className="h-3 w-3" />
           مشاركة
         </Button>

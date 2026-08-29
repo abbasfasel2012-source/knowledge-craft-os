@@ -32,7 +32,11 @@ function AdminSettings() {
   const { data: settings } = useQuery({
     queryKey: ["platform-settings"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("platform_settings").select("*").eq("id", 1).maybeSingle();
+      const { data, error } = await supabase
+        .from("platform_settings")
+        .select("*")
+        .eq("id", 1)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -50,7 +54,11 @@ function AdminSettings() {
   const { data: announcements } = useQuery({
     queryKey: ["admin-announcements"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("announcements").select("id,title,body,created_at").is("course_id", null).order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("announcements")
+        .select("id,title,body,created_at")
+        .is("course_id", null)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -59,11 +67,24 @@ function AdminSettings() {
   const saveSettingsMutation = useMutation({
     mutationFn: async () => {
       setSaving(true);
-      const { error } = await supabase.from("platform_settings").update({ platform_name: platformName, tagline, about, contact_email: contactEmail, allow_signup: allowSignup, updated_at: new Date().toISOString() }).eq("id", 1);
+      const { error } = await supabase
+        .from("platform_settings")
+        .update({
+          platform_name: platformName,
+          tagline,
+          about,
+          contact_email: contactEmail,
+          allow_signup: allowSignup,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", 1);
       setSaving(false);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("تم حفظ الإعدادات"); queryClient.invalidateQueries({ queryKey: ["platform-settings"] }); },
+    onSuccess: () => {
+      toast.success("تم حفظ الإعدادات");
+      queryClient.invalidateQueries({ queryKey: ["platform-settings"] });
+    },
     onError: (err: Error) => toast.error(err.message),
   });
 
@@ -71,16 +92,26 @@ function AdminSettings() {
     mutationFn: async () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("غير مصرح");
-      const { error } = await supabase.from("announcements").insert({ title: annTitle, body: annBody, created_by: userData.user.id });
+      const { error } = await supabase
+        .from("announcements")
+        .insert({ title: annTitle, body: annBody, created_by: userData.user.id });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("تم نشر الإعلان"); setAnnTitle(""); setAnnBody(""); queryClient.invalidateQueries({ queryKey: ["admin-announcements"] }); },
+    onSuccess: () => {
+      toast.success("تم نشر الإعلان");
+      setAnnTitle("");
+      setAnnBody("");
+      queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
+    },
     onError: (err: Error) => toast.error(err.message),
   });
 
   async function deleteAnnouncement(id: string) {
     const { error } = await supabase.from("announcements").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
   }
 
@@ -96,25 +127,81 @@ function AdminSettings() {
 
         <TabsContent value="general" className="space-y-3">
           <Card className="border-border">
-            <CardHeader><CardTitle className="text-sm">إعدادات المنصة</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-sm">إعدادات المنصة</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-3">
-              <div className="space-y-1.5"><Label>اسم المنصة</Label><Input value={platformName} onChange={(e) => setPlatformName(e.target.value)} /></div>
-              <div className="space-y-1.5"><Label>الشعار النصي</Label><Input value={tagline} onChange={(e) => setTagline(e.target.value)} /></div>
-              <div className="space-y-1.5"><Label>من نحن</Label><Textarea value={about} onChange={(e) => setAbout(e.target.value)} className="min-h-[100px]" /></div>
-              <div className="space-y-1.5"><Label>بريد التواصل</Label><Input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} /></div>
-              <div className="flex items-center gap-2"><Switch checked={allowSignup} onCheckedChange={setAllowSignup} /><Label>السماح بالتسجيل الجديد</Label></div>
-              <Button onClick={() => saveSettingsMutation.mutate()} disabled={saving} className="w-full gold-gradient text-gold-foreground">{saving ? "جارٍ الحفظ..." : "حفظ الإعدادات"}</Button>
+              <div className="space-y-1.5">
+                <Label>اسم المنصة</Label>
+                <Input value={platformName} onChange={(e) => setPlatformName(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>الشعار النصي</Label>
+                <Input value={tagline} onChange={(e) => setTagline(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>من نحن</Label>
+                <Textarea
+                  value={about}
+                  onChange={(e) => setAbout(e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>بريد التواصل</Label>
+                <Input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={allowSignup} onCheckedChange={setAllowSignup} />
+                <Label>السماح بالتسجيل الجديد</Label>
+              </div>
+              <Button
+                onClick={() => saveSettingsMutation.mutate()}
+                disabled={saving}
+                className="w-full gold-gradient text-gold-foreground"
+              >
+                {saving ? "جارٍ الحفظ..." : "حفظ الإعدادات"}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="announcements" className="space-y-3">
           <Card className="border-border">
-            <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Megaphone className="h-4 w-4 text-gold" /> إعلان جديد</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Megaphone className="h-4 w-4 text-gold" /> إعلان جديد
+              </CardTitle>
+            </CardHeader>
             <CardContent className="space-y-3">
-              <div className="space-y-1.5"><Label>العنوان</Label><Input value={annTitle} onChange={(e) => setAnnTitle(e.target.value)} placeholder="عنوان الإعلان" /></div>
-              <div className="space-y-1.5"><Label>المحتوى</Label><Textarea value={annBody} onChange={(e) => setAnnBody(e.target.value)} placeholder="نص الإعلان" className="min-h-[80px]" /></div>
-              <Button onClick={() => annMutation.mutate()} disabled={!annTitle.trim() || !annBody.trim() || annMutation.isPending} className="w-full gold-gradient text-gold-foreground"><Plus className="h-4 w-4" /> نشر الإعلان</Button>
+              <div className="space-y-1.5">
+                <Label>العنوان</Label>
+                <Input
+                  value={annTitle}
+                  onChange={(e) => setAnnTitle(e.target.value)}
+                  placeholder="عنوان الإعلان"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>المحتوى</Label>
+                <Textarea
+                  value={annBody}
+                  onChange={(e) => setAnnBody(e.target.value)}
+                  placeholder="نص الإعلان"
+                  className="min-h-[80px]"
+                />
+              </div>
+              <Button
+                onClick={() => annMutation.mutate()}
+                disabled={!annTitle.trim() || !annBody.trim() || annMutation.isPending}
+                className="w-full gold-gradient text-gold-foreground"
+              >
+                <Plus className="h-4 w-4" /> نشر الإعلان
+              </Button>
             </CardContent>
           </Card>
 
@@ -123,13 +210,23 @@ function AdminSettings() {
               <Card key={a.id} className="border-border">
                 <CardContent className="p-3">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1"><p className="text-sm font-semibold">{a.title}</p><p className="text-xs text-muted-foreground mt-0.5">{a.body}</p><p className="text-[10px] text-muted-foreground mt-1">{new Date(a.created_at).toLocaleDateString("ar")}</p></div>
-                    <Button variant="ghost" size="icon" onClick={() => deleteAnnouncement(a.id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{a.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{a.body}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {new Date(a.created_at).toLocaleDateString("ar")}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => deleteAnnouncement(a.id)}>
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
-            {(!announcements || announcements.length === 0) && <p className="py-4 text-center text-sm text-muted-foreground">لا توجد إعلانات.</p>}
+            {(!announcements || announcements.length === 0) && (
+              <p className="py-4 text-center text-sm text-muted-foreground">لا توجد إعلانات.</p>
+            )}
           </div>
         </TabsContent>
       </Tabs>

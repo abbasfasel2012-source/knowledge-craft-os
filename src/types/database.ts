@@ -8,7 +8,7 @@ export interface Profile {
   full_name?: string;
   avatar_url?: string;
   bio?: string;
-  role: 'admin' | 'user';
+  role: "admin" | "user";
   created_at: string;
   updated_at: string;
 }
@@ -22,11 +22,11 @@ export interface Course {
   category_id?: string;
   instructor_id: string;
   cover_url?: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
+  level: "beginner" | "intermediate" | "advanced";
   duration_minutes: number;
   is_free: boolean;
   price: number;
-  status: 'draft' | 'published' | 'archived';
+  status: "draft" | "published" | "archived";
   students_count: number;
   rating: number;
   created_at: string;
@@ -75,7 +75,7 @@ export interface CompletionRecord {
   user_id: string;
   course_id: string;
   video_id?: string;
-  status: 'in_progress' | 'completed' | 'abandoned';
+  status: "in_progress" | "completed" | "abandoned";
   progress: number;
   time_spent: number;
   started_at: string;
@@ -144,6 +144,6 @@ export interface InteractionLog {
   course_id?: string;
   video_id?: string;
   type: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   created_at: string;
 }
