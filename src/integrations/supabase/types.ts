@@ -164,6 +164,13 @@ export type Database = {
             referencedRelation: "questions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "attempt_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       badges: {
@@ -394,6 +401,13 @@ export type Database = {
             referencedRelation: "lessons"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lesson_notes_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons_catalog"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lesson_progress: {
@@ -440,6 +454,13 @@ export type Database = {
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons_catalog"
             referencedColumns: ["id"]
           },
         ]
@@ -677,6 +698,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "qna_posts_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons_catalog"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "qna_posts_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
@@ -844,6 +872,13 @@ export type Database = {
             referencedRelation: "lessons"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "quizzes_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons_catalog"
+            referencedColumns: ["id"]
+          },
         ]
       }
       reactions: {
@@ -884,6 +919,13 @@ export type Database = {
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reactions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons_catalog"
             referencedColumns: ["id"]
           },
         ]
@@ -958,6 +1000,13 @@ export type Database = {
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_items_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons_catalog"
             referencedColumns: ["id"]
           },
         ]
@@ -1046,7 +1095,55 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      lessons_catalog: {
+        Row: {
+          course_id: string | null
+          duration_minutes: number | null
+          id: string | null
+          is_preview: boolean | null
+          position: number | null
+          section_id: string | null
+          summary: string | null
+          title: string | null
+          type: Database["public"]["Enums"]["lesson_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions_view: {
+        Row: {
+          id: string | null
+          options: Json | null
+          points: number | null
+          position: number | null
+          prompt: string | null
+          quiz_id: string | null
+          type: Database["public"]["Enums"]["question_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_edit_course: {
