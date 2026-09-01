@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { BottomNav } from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
+import { I18nProvider } from "@/lib/i18n-context";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -78,16 +79,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "مِرقاة — منصة التدريب" },
+      { title: "تدريب — منصة التدريب" },
       {
         name: "description",
         content: "منصة تدريب عربية: دورات وفيديوهات ومرفقات ومساعد ذكي وشهادات.",
       },
-      { name: "theme-color", content: "#1A1815" },
+      { name: "theme-color", content: "#0F1512" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-title", content: "مِرقاة" },
+      { name: "apple-mobile-web-app-title", content: "تدريب" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -137,12 +138,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="mx-auto min-h-screen max-w-lg pb-28">
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-      </div>
-      <BottomNav />
-      <Toaster position="top-center" richColors />
+      <I18nProvider>
+        <div className="mx-auto min-h-screen max-w-lg pb-28">
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </div>
+        <BottomNav />
+        <Toaster position="top-center" richColors />
+      </I18nProvider>
     </QueryClientProvider>
   );
 }

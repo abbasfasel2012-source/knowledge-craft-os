@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { Search } from "lucide-react";
 
 export const Route = createFileRoute("/admin/users")({
-  head: () => ({ meta: [{ title: "المستخدمون — مِرقاة" }] }),
+  head: () => ({ meta: [{ title: "المستخدمون — تدريب" }] }),
   component: AdminUsers,
 });
 

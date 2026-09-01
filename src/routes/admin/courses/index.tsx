@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { uploadMedia } from "@/lib/storage";
 
 export const Route = createFileRoute("/admin/courses/")({
-  head: () => ({ meta: [{ title: "إدارة الدورات — مِرقاة" }] }),
+  head: () => ({ meta: [{ title: "إدارة الدورات — تدريب" }] }),
   component: AdminCourses,
 });
 

@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
-      { title: "لوحة التحكم — مِرقاة" },
+      { title: "لوحة التحكم — تدريب" },
       { name: "description", content: "لوحة تحكم المشرفين وإدارة الدورات" },
     ],
   }),

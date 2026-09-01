@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { History, CheckCircle, Bookmark, Award, Star } from "lucide-react";
 
 export const Route = createFileRoute("/record")({
-  head: () => ({ meta: [{ title: "السجل — مِرقاة" }] }),
+  head: () => ({ meta: [{ title: "السجل — تدريب" }] }),
   component: RecordPage,
 });
 

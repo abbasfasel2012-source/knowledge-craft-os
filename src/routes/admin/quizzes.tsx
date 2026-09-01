@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { Plus, X, Trash2, HelpCircle } from "lucide-react";
 
 export const Route = createFileRoute("/admin/quizzes")({
-  head: () => ({ meta: [{ title: "إدارة الاختبارات — مِرقاة" }] }),
+  head: () => ({ meta: [{ title: "إدارة الاختبارات — تدريب" }] }),
   component: AdminQuizzes,
 });
 

@@ -12,12 +12,12 @@ import logo from "@/assets/logo.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "مِرقاة — منصة التدريب العربية" },
+      { title: "تدريب — منصة التدريب العربية" },
       {
         name: "description",
         content: "تعلّم من دورات مصوّرة مع مرفقات ومساعد ذكي وشهادات إتمام — بواجهة عربية سلسة.",
       },
-      { property: "og:title", content: "مِرقاة — منصة التدريب العربية" },
+      { property: "og:title", content: "تدريب — منصة التدريب العربية" },
       {
         property: "og:description",
         content: "دورات مصوّرة، مرفقات، مساعد ذكي، شهادات وباجات — كل شيء في تطبيق واحد.",
@@ -123,10 +123,10 @@ function Home() {
     <div className="px-4 pt-6">
       <header className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src={logo} alt="شعار مِرقاة" className="h-11 w-11 rounded-2xl object-cover" />
+          <img src={logo} alt="شعار تدريب" className="h-11 w-11 rounded-2xl object-cover" />
           <div>
             <p className="text-xs text-muted-foreground">أهلاً بك في</p>
-            <h1 className="text-lg font-bold">مِرقاة</h1>
+            <h1 className="text-lg font-bold">تدريب</h1>
           </div>
         </div>
         {!user && (

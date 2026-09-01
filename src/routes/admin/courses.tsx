@@ -21,7 +21,7 @@ import { Plus, Edit3, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/courses")({
-  head: () => ({ meta: [{ title: "إدارة الدورات — مِرقاة" }] }),
+  head: () => ({ meta: [{ title: "إدارة الدورات — تدريب" }] }),
   component: AdminCourses,
 });
 

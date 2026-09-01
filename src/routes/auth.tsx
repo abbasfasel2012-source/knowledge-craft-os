@@ -11,7 +11,7 @@ import { GraduationCap, Mail, Lock, User } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "تسجيل الدخول — مِرقاة" }] }),
+  head: () => ({ meta: [{ title: "تسجيل الدخول — تدريب" }] }),
   component: AuthPage,
 });
 
@@ -57,9 +57,9 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
       <div className="mb-8 flex flex-col items-center gap-3">
-        <img src={logo} alt="شعار مِرقاة" className="h-16 w-16 rounded-3xl object-cover" />
+        <img src={logo} alt="شعار تدريب" className="h-16 w-16 rounded-3xl object-cover" />
         <div className="text-center">
-          <h1 className="text-2xl font-bold">مِرقاة</h1>
+          <h1 className="text-2xl font-bold">تدريب</h1>
           <p className="text-sm text-muted-foreground">منصة التدريب العربية</p>
         </div>
       </div>

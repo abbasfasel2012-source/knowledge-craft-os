@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const Route = createFileRoute("/records")({
   head: () => ({
     meta: [
-      { title: "السجلات — مِرقاة" },
+      { title: "السجلات — تدريب" },
       { name: "description", content: "سجل إنجازاتك والتفاعلات والشهادات" },
     ],
   }),

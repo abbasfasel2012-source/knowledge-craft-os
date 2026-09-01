@@ -29,7 +29,7 @@ import {
 import { uploadMedia } from "@/lib/storage";
 
 export const Route = createFileRoute("/admin/courses/$id")({
-  head: () => ({ meta: [{ title: "تحرير الدورة — مِرقاة" }] }),
+  head: () => ({ meta: [{ title: "تحرير الدورة — تدريب" }] }),
   component: EditCourse,
 });
 

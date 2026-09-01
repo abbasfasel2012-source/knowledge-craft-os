@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, Megaphone } from "lucide-react";
 
 export const Route = createFileRoute("/admin/settings")({
-  head: () => ({ meta: [{ title: "الإعدادات — مِرقاة" }] }),
+  head: () => ({ meta: [{ title: "الإعدادات — تدريب" }] }),
   component: AdminSettings,
 });
 

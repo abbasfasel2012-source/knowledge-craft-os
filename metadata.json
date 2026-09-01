@@ -1,5 +1,5 @@
 {
-  "name": "مِرقاة - منصة التدريب",
+  "name": "تدريب - منصة التدريب",
   "description": "منصة تدريب عربية متكاملة تشمل الدورات التعليمية والفيديوهات والمرفقات والشهادات والمساعد الذكي.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

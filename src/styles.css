@@ -8,36 +8,46 @@
   --foreground: hsl(20 8% 9%);
   --card: hsl(42 28% 96%);
   --card-foreground: hsl(20 8% 9%);
-  --primary: hsl(46 99% 44%);
-  --primary-foreground: hsl(20 8% 9%);
+  --primary: hsl(152 58% 30%);
+  --primary-foreground: hsl(0 0% 100%);
   --secondary: hsl(42 22% 92%);
   --secondary-foreground: hsl(20 8% 9%);
   --muted: hsl(42 22% 93%);
   --muted-foreground: hsl(20 8% 35%);
-  --accent: hsl(46 99% 44%);
-  --accent-foreground: hsl(20 8% 9%);
+  --accent: hsl(152 58% 30%);
+  --accent-foreground: hsl(0 0% 100%);
   --destructive: hsl(0 84% 60%);
   --destructive-foreground: hsl(0 0% 100%);
   --border: hsl(38 18% 87%);
   --input: hsl(38 18% 87%);
-  --ring: hsl(46 99% 44%);
-  --gold: hsl(46 99% 44%);
-  --gold-foreground: hsl(20 8% 9%);
+  --ring: hsl(152 58% 30%);
+  /* اسم المتغيّر "gold" أُبقي كما هو لتفادي إعادة تسمية عشرات الاستخدامات بالكود،
+     لكن قيمته الفعلية أصبحت أخضر العلامة التجارية الجديدة */
+  --gold: hsl(152 58% 30%);
+  --gold-foreground: hsl(0 0% 100%);
   --radius: 0.5rem;
   --shadow-soft: 0 1px 3px 0 hsl(20 8% 9% / 0.08);
 }
 
 .dark {
-  --background: hsl(20 15% 12%);
+  --background: hsl(150 17% 7%);
   --foreground: hsl(42 30% 96%);
-  --card: hsl(20 15% 12%);
+  --card: hsl(140 15% 12%);
   --card-foreground: hsl(42 30% 96%);
-  --secondary: hsl(20 8% 24%);
+  --primary: hsl(142 50% 55%);
+  --primary-foreground: hsl(150 25% 8%);
+  --secondary: hsl(140 10% 18%);
   --secondary-foreground: hsl(42 30% 96%);
-  --muted: hsl(20 8% 24%);
-  --muted-foreground: hsl(20 8% 65%);
-  --border: hsl(20 8% 25%);
-  --input: hsl(20 8% 25%);
+  --muted: hsl(140 10% 18%);
+  --muted-foreground: hsl(140 8% 65%);
+  --accent: hsl(142 50% 55%);
+  --accent-foreground: hsl(150 25% 8%);
+  --border: hsl(140 10% 20%);
+  --input: hsl(140 10% 20%);
+  --ring: hsl(142 50% 55%);
+  /* أخضر أفتح شوي من وضع النهار لضمان التباين على الخلفية الغامقة */
+  --gold: hsl(142 50% 55%);
+  --gold-foreground: hsl(150 25% 8%);
 }
 
 @theme inline {
@@ -100,6 +110,40 @@
   }
 }
 
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(8px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.03) translateY(-2px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
 @utility gold-gradient {
   background-image: linear-gradient(
     to left,
@@ -122,6 +166,34 @@
 }
 @utility animate-pulse-gold {
   animation: pulse-gold 2s ease-in-out infinite;
+}
+@utility animate-scaleIn {
+  animation: scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@utility animate-bounceIn {
+  animation: bounce-in 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@utility skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--muted) 100%, transparent) 25%,
+    color-mix(in srgb, var(--muted) 60%, transparent) 50%,
+    color-mix(in srgb, var(--muted) 100%, transparent) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+@utility interactive-card {
+  transition-property: transform, box-shadow, border-color;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  &:active {
+    transform: scale(0.97);
+  }
+}
+@utility stagger-item {
+  animation: slide-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--stagger-index, 0) * 60ms);
 }
 @utility text-truncate-2 {
   overflow: hidden;
@@ -167,12 +239,35 @@ html {
   font-family: var(--font-sans);
 }
 
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 body {
   min-height: 100vh;
   margin: 0;
   background: var(--background);
   color: var(--foreground);
   overscroll-behavior-y: none;
+}
+
+img,
+video,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+p,
+span,
+h1,
+h2,
+h3,
+h4 {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 h1,

@@ -5,13 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { isStaff, ROLE_LABELS, useSession } from "@/lib/session";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
-      { title: "ملفي الشخصي — مِرقاة" },
-      { name: "description", content: "ملفك الشخصي وإحصائياتك وشهاداتك وإعداداتك في منصة مِرقاة." },
-      { property: "og:title", content: "ملفي الشخصي — مِرقاة" },
+      { title: "ملفي الشخصي — تدريب" },
+      { name: "description", content: "ملفك الشخصي وإحصائياتك وشهاداتك وإعداداتك في منصة تدريب." },
+      { property: "og:title", content: "ملفي الشخصي — تدريب" },
       { property: "og:description", content: "تابع تقدمك وشهاداتك وإعداداتك." },
     ],
   }),
@@ -228,6 +229,8 @@ function ProfilePage() {
               <p className="mt-1 text-sm font-semibold">{ROLE_LABELS[user.role]}</p>
             </div>
           </div>
+
+          <LanguageSwitcher />
 
           <Link
             to="/record"

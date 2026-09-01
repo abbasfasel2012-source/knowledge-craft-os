@@ -37,9 +37,9 @@ import {
 export const Route = createFileRoute("/course/$slug")({
   head: () => ({
     meta: [
-      { title: "الدورة — مِرقاة" },
+      { title: "الدورة — تدريب" },
       { name: "description", content: "شاهد دروس الدورة، حمّل المرفقات، واسأل المساعد الذكي." },
-      { property: "og:title", content: "دورة تدريبية على مِرقاة" },
+      { property: "og:title", content: "دورة تدريبية على تدريب" },
       { property: "og:description", content: "دروس مرئية، مرفقات، اختبارات ومساعد ذكي." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -558,15 +558,23 @@ function CourseDetail() {
       </div>
 
       <Tabs defaultValue="lessons" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 rounded-lg bg-card">
-          <TabsTrigger value="lessons">الدروس</TabsTrigger>
-          <TabsTrigger value="materials">المرفقات</TabsTrigger>
-          <TabsTrigger value="quizzes">الاختبارات</TabsTrigger>
-          <TabsTrigger value="comments">
+        <TabsList className="flex w-full items-center justify-start gap-1 overflow-x-auto rounded-lg bg-card scrollbar-hide">
+          <TabsTrigger value="lessons" className="shrink-0 px-2.5 text-xs sm:text-sm">
+            الدروس
+          </TabsTrigger>
+          <TabsTrigger value="materials" className="shrink-0 px-2.5 text-xs sm:text-sm">
+            المرفقات
+          </TabsTrigger>
+          <TabsTrigger value="quizzes" className="shrink-0 px-2.5 text-xs sm:text-sm">
+            الاختبارات
+          </TabsTrigger>
+          <TabsTrigger value="comments" className="shrink-0 px-2.5 text-xs sm:text-sm">
             <MessageCircle className="h-4 w-4" />
             <span className="ms-1 text-[11px]">{comments?.length || 0}</span>
           </TabsTrigger>
-          <TabsTrigger value="ai">المساعد</TabsTrigger>
+          <TabsTrigger value="ai" className="shrink-0 px-2.5 text-xs sm:text-sm">
+            المساعد
+          </TabsTrigger>
         </TabsList>
 
         {/* الدروس */}

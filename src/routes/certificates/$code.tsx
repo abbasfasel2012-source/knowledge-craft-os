@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Award, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/certificates/$code")({
-  head: () => ({ meta: [{ title: "تحقق من شهادة — مِرقاة" }] }),
+  head: () => ({ meta: [{ title: "تحقق من شهادة — تدريب" }] }),
   component: CertificateVerify,
 });
 
@@ -19,7 +19,7 @@ function CertificateVerify() {
         return {
           code: code,
           issued_at: new Date().toISOString(),
-          user: { full_name: "متدرب مِرقاة المتميز" },
+          user: { full_name: "متدرب تدريب المتميز" },
           course: { title: "مقدمة شاملة في الذكاء الاصطناعي التوليدي وهندسة الأوامر" },
         };
       }
@@ -33,7 +33,7 @@ function CertificateVerify() {
           return {
             code: code,
             issued_at: new Date().toISOString(),
-            user: { full_name: "متدرب مِرقاة المتميز" },
+            user: { full_name: "متدرب تدريب المتميز" },
             course: { title: "دورة تدريبية معتمدة" },
           };
         }
@@ -42,7 +42,7 @@ function CertificateVerify() {
         return {
           code: code,
           issued_at: new Date().toISOString(),
-          user: { full_name: "متدرب مِرقاة المتميز" },
+          user: { full_name: "متدرب تدريب المتميز" },
           course: { title: "دورة تدريبية معتمدة" },
         };
       }
@@ -81,7 +81,7 @@ function CertificateVerify() {
             <span>شهادة إتمام رسمية ومعتمدة</span>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">تمنح منصة مِرقاة هذه الشهادة إلى</p>
+            <p className="text-xs text-muted-foreground">تمنح منصة تدريب هذه الشهادة إلى</p>
             <h1 className="mt-1 text-2xl font-bold text-foreground">
               {user?.full_name ?? "متدرب"}
             </h1>

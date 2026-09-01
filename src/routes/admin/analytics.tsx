@@ -17,7 +17,7 @@ import {
 import { Users, BookOpen, Award, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/admin/analytics")({
-  head: () => ({ meta: [{ title: "التحليلات — مِرقاة" }] }),
+  head: () => ({ meta: [{ title: "التحليلات — تدريب" }] }),
   component: AdminAnalytics,
 });
 
