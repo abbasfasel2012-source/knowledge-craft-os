@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 import { isStaff, useSession } from "@/lib/session";
+import { useMediaUrl, resolveMedia } from "@/lib/media";
 import { CourseComments } from "@/components/CourseComments";
 import { VideoUploadCard } from "@/components/VideoUploadCard";
 import { LessonAiAssistant } from "@/components/LessonAiAssistant";
@@ -267,14 +268,23 @@ function CourseDetail() {
       try {
         const { data, error } = await supabase
           .from("qna_posts")
-          .select("id, body, created_at, user_id, profiles:user_id(full_name, avatar_url)")
+          .select("id, body, created_at, user_id")
           .eq("course_id", courseId!)
           .order("created_at", { ascending: false });
         if (error) throw error;
+        const ids = [...new Set((data || []).map((r) => r.user_id))];
+        const authors = new Map<string, { full_name: string | null; avatar_url: string | null }>();
+        if (ids.length) {
+          const { data: profs } = await supabase
+            .from("profiles")
+            .select("id, full_name, avatar_url")
+            .in("id", ids);
+          (profs || []).forEach((pr) => authors.set(pr.id, pr));
+        }
         return (data || []).map((row) => ({
           id: row.id,
-          author: (row.profiles as { full_name?: string } | null)?.full_name || "مستخدم",
-          avatar: (row.profiles as { avatar_url?: string } | null)?.avatar_url,
+          author: authors.get(row.user_id)?.full_name || "مستخدم",
+          avatar: authors.get(row.user_id)?.avatar_url ?? undefined,
           content: row.body,
           timestamp: new Date(row.created_at).toLocaleDateString("ar"),
           likes: 0,
@@ -296,6 +306,9 @@ function CourseDetail() {
 
   const playable = lessons?.filter((l) => l.video_url || l.audio_url) ?? [];
   const current = playable[currentIndex];
+  const currentVideoSrc = useMediaUrl(current?.video_url);
+  const currentAudioSrc = useMediaUrl(current?.audio_url);
+  const posterSrc = useMediaUrl(course?.cover_url);
   const completedIds = new Set(
     (progressRows ?? []).filter((p) => p.completed).map((p) => p.lesson_id),
   );
@@ -435,7 +448,8 @@ function CourseDetail() {
     try {
       await downloadFile(url, title);
     } catch {
-      window.open(url, "_blank");
+      const signed = (await resolveMedia(url)) ?? url;
+      window.open(signed, "_blank");
     }
   };
 
@@ -465,15 +479,15 @@ function CourseDetail() {
   return (
     <div className="space-y-6 px-4 py-6">
       {/* المشغّل */}
-      {current?.video_url && !videoError ? (
+      {current?.video_url && currentVideoSrc && !videoError ? (
         <div className="overflow-hidden rounded-2xl bg-black aspect-video">
           <video
             ref={videoRef}
-            src={current.video_url}
+            src={currentVideoSrc}
             controls
             playsInline
             className="h-full w-full object-contain"
-            poster={course.cover_url ?? undefined}
+            poster={posterSrc}
             onError={() => setVideoError(true)}
             onPause={persistPosition}
             onEnded={handleComplete}
@@ -484,7 +498,7 @@ function CourseDetail() {
           <p className="mb-2 flex items-center gap-2 text-sm font-semibold">
             <Headphones className="h-4 w-4 text-gold" /> {current.title}
           </p>
-          <audio src={current.audio_url} controls className="w-full" />
+          <audio src={currentAudioSrc} controls className="w-full" />
         </div>
       ) : (
         <div className="flex aspect-video items-center justify-center rounded-2xl bg-muted">

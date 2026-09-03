@@ -5,6 +5,7 @@ import { useSession } from "@/lib/session";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { History, CheckCircle, Bookmark, Award, Star } from "lucide-react";
+import { MediaImage } from "@/components/MediaImage";
 
 export const Route = createFileRoute("/record")({
   head: () => ({ meta: [{ title: "السجل — تدريب" }] }),
@@ -129,13 +130,7 @@ function RecordPage() {
                 <Card className="border-border mb-2">
                   <CardContent className="flex gap-3 p-3">
                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-                      {c.cover_url && (
-                        <img
-                          src={c.cover_url}
-                          alt={c.title}
-                          className="h-full w-full object-cover"
-                        />
-                      )}
+                      <MediaImage src={c.cover_url} alt={c.title} className="h-full w-full object-cover" />
                     </div>
                     <div className="flex-1">
                       <p className="line-clamp-1 text-sm font-semibold">{c.title}</p>
@@ -168,13 +163,7 @@ function RecordPage() {
                   <Card className="border-green-500/30 bg-green-500/5 mb-2">
                     <CardContent className="flex gap-3 p-3">
                       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-                        {c.cover_url && (
-                          <img
-                            src={c.cover_url}
-                            alt={c.title}
-                            className="h-full w-full object-cover"
-                          />
-                        )}
+                        <MediaImage src={c.cover_url} alt={c.title} className="h-full w-full object-cover" />
                       </div>
                       <div className="flex-1">
                         <p className="line-clamp-1 text-sm font-semibold">{c.title}</p>

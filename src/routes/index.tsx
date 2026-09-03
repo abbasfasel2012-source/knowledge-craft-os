@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DEMO_CATEGORIES, DEMO_COURSES } from "@/lib/demo-data";
 import logo from "@/assets/logo.png";
+import { MediaImage } from "@/components/MediaImage";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -177,9 +178,7 @@ function Home() {
                   className="w-44 shrink-0 rounded-2xl border border-border bg-card p-3"
                 >
                   <div className="mb-2 h-20 overflow-hidden rounded-xl bg-muted">
-                    {c.cover_url && (
-                      <img src={c.cover_url} alt={c.title} className="h-full w-full object-cover" />
-                    )}
+                    <MediaImage src={c.cover_url} alt={c.title} className="h-full w-full object-cover" />
                   </div>
                   <p className="line-clamp-1 text-xs font-semibold">{c.title}</p>
                   <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
@@ -226,10 +225,9 @@ function Home() {
             >
               <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
                 {c.cover_url ? (
-                  <img
+                  <MediaImage
                     src={c.cover_url}
                     alt={c.title}
-                    loading="lazy"
                     className="h-full w-full object-cover"
                   />
                 ) : (

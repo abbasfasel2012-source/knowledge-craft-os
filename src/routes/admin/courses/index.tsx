@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { Plus, Edit3, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { uploadMedia } from "@/lib/storage";
+import { MediaImage } from "@/components/MediaImage";
 
 export const Route = createFileRoute("/admin/courses/")({
   head: () => ({ meta: [{ title: "إدارة الدورات — تدريب" }] }),
@@ -88,9 +89,7 @@ function AdminCourses() {
               <CardContent className="p-3">
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
-                    {c.cover_url && (
-                      <img src={c.cover_url} alt={c.title} className="h-full w-full object-cover" />
-                    )}
+                    <MediaImage src={c.cover_url} alt={c.title} className="h-full w-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="line-clamp-1 text-sm font-semibold">{c.title}</p>

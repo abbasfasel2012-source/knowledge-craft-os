@@ -1,3 +1,4 @@
+import { resolveMedia } from "@/lib/media";
 import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 
 /** الاشتراك في دورة (إن لم يكن مشتركاً). */
@@ -168,7 +169,8 @@ export async function recomputeCourseProgress(courseId: string, userId: string) 
 
 /** تنزيل ملف عبر رابطه مع اسم مناسب. */
 export async function downloadFile(url: string, filename: string) {
-  const res = await fetch(url);
+  const signed = (await resolveMedia(url)) ?? url;
+  const res = await fetch(signed);
   if (!res.ok) throw new Error("تعذّر تحميل الملف");
   const blob = await res.blob();
   const objectUrl = URL.createObjectURL(blob);
