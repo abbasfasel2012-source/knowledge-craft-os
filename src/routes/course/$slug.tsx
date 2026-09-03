@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 import { isStaff, useSession } from "@/lib/session";
+import { useMediaUrl, resolveMedia } from "@/lib/media";
 import { CourseComments } from "@/components/CourseComments";
 import { VideoUploadCard } from "@/components/VideoUploadCard";
 import { LessonAiAssistant } from "@/components/LessonAiAssistant";
@@ -447,7 +448,8 @@ function CourseDetail() {
     try {
       await downloadFile(url, title);
     } catch {
-      window.open(url, "_blank");
+      const signed = (await resolveMedia(url)) ?? url;
+      window.open(signed, "_blank");
     }
   };
 
