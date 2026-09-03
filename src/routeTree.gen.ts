@@ -16,7 +16,6 @@ import { Route as RecordRouteImport } from './routes/record'
 import { Route as RecordsRouteImport } from './routes/records'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
-import { Route as AdminCoursesRouteImport } from './routes/admin/courses'
 import { Route as AdminQuizzesRouteImport } from './routes/admin/quizzes'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
@@ -61,11 +60,6 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   path: '/admin/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminCoursesRoute = AdminCoursesRouteImport.update({
-  id: '/admin/courses',
-  path: '/admin/courses',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminQuizzesRoute = AdminQuizzesRouteImport.update({
   id: '/admin/quizzes',
   path: '/admin/quizzes',
@@ -97,14 +91,14 @@ const QuizIdRoute = QuizIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCoursesIndexRoute = AdminCoursesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminCoursesRoute,
+  id: '/admin/courses/',
+  path: '/admin/courses/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCoursesIdRoute = AdminCoursesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AdminCoursesRoute,
+  id: '/admin/courses/$id',
+  path: '/admin/courses/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -114,7 +108,6 @@ export interface FileRoutesByFullPath {
   '/record': typeof RecordRoute
   '/records': typeof RecordsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -150,7 +143,6 @@ export interface FileRoutesById {
   '/record': typeof RecordRoute
   '/records': typeof RecordsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -170,7 +162,6 @@ export interface FileRouteTypes {
     | '/record'
     | '/records'
     | '/admin/analytics'
-    | '/admin/courses'
     | '/admin/quizzes'
     | '/admin/settings'
     | '/admin/users'
@@ -205,7 +196,6 @@ export interface FileRouteTypes {
     | '/record'
     | '/records'
     | '/admin/analytics'
-    | '/admin/courses'
     | '/admin/quizzes'
     | '/admin/settings'
     | '/admin/users'
@@ -224,7 +214,6 @@ export interface RootRouteChildren {
   RecordRoute: typeof RecordRoute
   RecordsRoute: typeof RecordsRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
-  AdminCoursesRoute: typeof AdminCoursesRouteWithChildren
   AdminQuizzesRoute: typeof AdminQuizzesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -232,6 +221,8 @@ export interface RootRouteChildren {
   CourseSlugRoute: typeof CourseSlugRoute
   QuizIdRoute: typeof QuizIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminCoursesIdRoute: typeof AdminCoursesIdRoute
+  AdminCoursesIndexRoute: typeof AdminCoursesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -285,13 +276,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/courses': {
-      id: '/admin/courses'
-      path: '/admin/courses'
-      fullPath: '/admin/courses'
-      preLoaderRoute: typeof AdminCoursesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/quizzes': {
       id: '/admin/quizzes'
       path: '/admin/quizzes'
@@ -336,34 +320,20 @@ declare module '@tanstack/react-router' {
     }
     '/admin/courses/': {
       id: '/admin/courses/'
-      path: '/'
+      path: '/admin/courses'
       fullPath: '/admin/courses/'
       preLoaderRoute: typeof AdminCoursesIndexRouteImport
-      parentRoute: typeof AdminCoursesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/admin/courses/$id': {
       id: '/admin/courses/$id'
-      path: '/$id'
+      path: '/admin/courses/$id'
       fullPath: '/admin/courses/$id'
       preLoaderRoute: typeof AdminCoursesIdRouteImport
-      parentRoute: typeof AdminCoursesRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface AdminCoursesRouteChildren {
-  AdminCoursesIdRoute: typeof AdminCoursesIdRoute
-  AdminCoursesIndexRoute: typeof AdminCoursesIndexRoute
-}
-
-const AdminCoursesRouteChildren: AdminCoursesRouteChildren = {
-  AdminCoursesIdRoute: AdminCoursesIdRoute,
-  AdminCoursesIndexRoute: AdminCoursesIndexRoute,
-}
-
-const AdminCoursesRouteWithChildren = AdminCoursesRoute._addFileChildren(
-  AdminCoursesRouteChildren,
-)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -372,7 +342,6 @@ const rootRouteChildren: RootRouteChildren = {
   RecordRoute: RecordRoute,
   RecordsRoute: RecordsRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
-  AdminCoursesRoute: AdminCoursesRouteWithChildren,
   AdminQuizzesRoute: AdminQuizzesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
@@ -380,6 +349,8 @@ const rootRouteChildren: RootRouteChildren = {
   CourseSlugRoute: CourseSlugRoute,
   QuizIdRoute: QuizIdRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminCoursesIdRoute: AdminCoursesIdRoute,
+  AdminCoursesIndexRoute: AdminCoursesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
