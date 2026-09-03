@@ -270,7 +270,7 @@ function QuestionsEditor({ quizId, onClose }: { quizId: string; onClose: () => v
           : [];
     const { error } = await supabase.from("questions").insert({
       quiz_id: quizId,
-      type,
+      type: type as "mcq" | "true_false" | "short" | "essay",
       prompt,
       options: opts,
       correct_answer: correctAnswer || null,

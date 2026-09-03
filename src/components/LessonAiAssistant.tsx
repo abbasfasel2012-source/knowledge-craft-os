@@ -30,7 +30,13 @@ async function fetchTextAttachment(url?: string | null): Promise<string> {
   }
 }
 
-export function LessonAiAssistant({ lessons }: { lessons: LessonLike[] }) {
+export function LessonAiAssistant({
+  lessons,
+  courseTitle,
+}: {
+  lessons: LessonLike[];
+  courseTitle?: string;
+}) {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -67,7 +73,7 @@ export function LessonAiAssistant({ lessons }: { lessons: LessonLike[] }) {
         .join("\n\n")
         .slice(0, 8000);
 
-      const title = lessons.map((l) => l.title).join("، ");
+      const title = [courseTitle, ...lessons.map((l) => l.title)].filter(Boolean).join("، ");
       const result = await askLessonAI({ data: { question: q, context, title } });
 
       if (result.ok) {

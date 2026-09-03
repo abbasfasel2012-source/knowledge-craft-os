@@ -177,7 +177,7 @@ function CourseForm({
       level,
       is_free: isFree,
       price: isFree ? 0 : price,
-      status,
+      status: status as "draft" | "published" | "archived",
       cover_url: coverUrl || null,
     });
     setSaving(false);

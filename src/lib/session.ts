@@ -48,8 +48,8 @@ export function useSession() {
         user: {
           id: authUser.id,
           email: authUser.email ?? "",
-          full_name: profile?.full_name,
-          avatar_url: profile?.avatar_url,
+          full_name: profile?.full_name ?? undefined,
+          avatar_url: profile?.avatar_url ?? undefined,
           role,
           created_at: profile?.created_at ?? new Date().toISOString(),
         },

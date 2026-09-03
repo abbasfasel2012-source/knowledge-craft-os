@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.guard_enrollment_progress() FROM PUBLIC, anon, authenticated;

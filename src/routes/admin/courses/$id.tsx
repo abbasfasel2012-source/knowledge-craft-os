@@ -63,7 +63,7 @@ function EditCourse() {
 
   const updateMutation = useMutation({
     mutationFn: async (updates: Record<string, unknown>) => {
-      const { error } = await supabase.from("courses").update(updates).eq("id", id);
+      const { error } = await supabase.from("courses").update(updates as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -250,7 +250,7 @@ function LessonForm({
     const { error } = await supabase.from("lessons").insert({
       course_id: courseId,
       title,
-      type,
+      type: type as "video" | "text" | "pdf" | "link" | "quiz",
       content: content || null,
       video_url: videoUrl || null,
       pdf_url: pdfUrl || null,
