@@ -50,7 +50,7 @@ function AdminUsers() {
   const roleMap = new Map(roles?.map((r) => [r.user_id, r.role]));
 
   const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+    mutationFn: async ({ userId, role }: { userId: string; role: "owner" | "instructor" | "moderator" | "student" }) => {
       const existing = roles?.find((r) => r.user_id === userId);
       if (existing) {
         const { error } = await supabase.from("user_roles").update({ role }).eq("user_id", userId);

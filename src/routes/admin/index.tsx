@@ -57,11 +57,19 @@ function AdminDashboard() {
     },
   });
 
+  type AdminCourse = {
+    id: string;
+    title: string;
+    students_count?: number;
+    duration_minutes?: number | null;
+    cover_url?: string | null;
+  };
+
   // Fetch all courses
   const { data: courses, isLoading: coursesLoading } = useQuery({
     enabled: isStaff(user?.role),
     queryKey: ["admin-courses"],
-    queryFn: async () => {
+    queryFn: async (): Promise<AdminCourse[]> => {
       try {
         const { data, error } = await supabase
           .from("courses")
@@ -93,7 +101,7 @@ function AdminDashboard() {
               cover_url:
                 "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=800&auto=format&fit=crop&q=80",
             },
-          ] as unknown as typeof data;
+          ];
         }
         return data;
       } catch {
@@ -122,7 +130,7 @@ function AdminDashboard() {
             cover_url:
               "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=800&auto=format&fit=crop&q=80",
           },
-        ] as unknown as typeof data;
+        ];
       }
     },
   });
@@ -212,7 +220,7 @@ function AdminDashboard() {
             </div>
           ) : courses && courses.length > 0 ? (
             <div className="space-y-2">
-              {courses.map((course) => (
+              {courses.map((course: AdminCourse) => (
                 <div
                   key={course.id}
                   className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
@@ -269,21 +277,21 @@ function AdminDashboard() {
                     {u.avatar_url && (
                       <img
                         src={u.avatar_url}
-                        alt={u.full_name || u.email}
+                        alt={u.full_name || ""}
                         className="h-full w-full object-cover"
                       />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-1 text-sm font-semibold">{u.full_name || u.email}</p>
-                    <p className="text-xs text-muted-foreground">{u.email}</p>
+                    <p className="line-clamp-1 text-sm font-semibold">{u.full_name || "مستخدم"}</p>
+                    <p className="text-xs text-muted-foreground">{u.id.slice(0, 8)}</p>
                   </div>
                   <span
                     className={`shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${
-                      u.role === "admin" ? "bg-gold/10 text-gold" : "bg-muted text-muted-foreground"
+                      "bg-muted text-muted-foreground"
                     }`}
                   >
-                    {u.role === "admin" ? "مشرف" : "مستخدم"}
+                    مستخدم
                   </span>
                 </div>
               ))}
