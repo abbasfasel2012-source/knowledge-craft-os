@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { isStaff, useSession } from "@/lib/session";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MediaImage } from "@/components/MediaImage";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -226,13 +227,7 @@ function AdminDashboard() {
                   className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
                 >
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
-                    {course.cover_url && (
-                      <img
-                        src={course.cover_url}
-                        alt={course.title}
-                        className="h-full w-full object-cover"
-                      />
-                    )}
+                    <MediaImage src={course.cover_url} alt={course.title} className="h-full w-full object-cover" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="line-clamp-1 text-sm font-semibold">{course.title}</p>
@@ -274,13 +269,7 @@ function AdminDashboard() {
                   className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
                 >
                   <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gold/10">
-                    {u.avatar_url && (
-                      <img
-                        src={u.avatar_url}
-                        alt={u.full_name || ""}
-                        className="h-full w-full object-cover"
-                      />
-                    )}
+                    <MediaImage src={u.avatar_url} alt={u.full_name || ""} className="h-full w-full object-cover" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="line-clamp-1 text-sm font-semibold">{u.full_name || "مستخدم"}</p>
