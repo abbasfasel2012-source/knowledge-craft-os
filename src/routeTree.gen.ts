@@ -91,14 +91,14 @@ const QuizIdRoute = QuizIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCoursesIndexRoute = AdminCoursesIndexRouteImport.update({
-  id: '/admin/courses/',
-  path: '/admin/courses/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminCoursesRoute,
 } as any)
 const AdminCoursesIdRoute = AdminCoursesIdRouteImport.update({
-  id: '/admin/courses/$id',
-  path: '/admin/courses/$id',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminCoursesRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -221,8 +221,6 @@ export interface RootRouteChildren {
   CourseSlugRoute: typeof CourseSlugRoute
   QuizIdRoute: typeof QuizIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
-  AdminCoursesIdRoute: typeof AdminCoursesIdRoute
-  AdminCoursesIndexRoute: typeof AdminCoursesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -320,17 +318,17 @@ declare module '@tanstack/react-router' {
     }
     '/admin/courses/': {
       id: '/admin/courses/'
-      path: '/admin/courses'
+      path: '/'
       fullPath: '/admin/courses/'
       preLoaderRoute: typeof AdminCoursesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminCoursesRoute
     }
     '/admin/courses/$id': {
       id: '/admin/courses/$id'
-      path: '/admin/courses/$id'
+      path: '/$id'
       fullPath: '/admin/courses/$id'
       preLoaderRoute: typeof AdminCoursesIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminCoursesRoute
     }
   }
 }
@@ -349,8 +347,6 @@ const rootRouteChildren: RootRouteChildren = {
   CourseSlugRoute: CourseSlugRoute,
   QuizIdRoute: QuizIdRoute,
   AdminIndexRoute: AdminIndexRoute,
-  AdminCoursesIdRoute: AdminCoursesIdRoute,
-  AdminCoursesIndexRoute: AdminCoursesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
