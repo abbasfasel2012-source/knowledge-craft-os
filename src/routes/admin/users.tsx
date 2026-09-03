@@ -97,7 +97,7 @@ function AdminUsers() {
               </div>
               <Select
                 value={roleMap.get(u.id) ?? "student"}
-                onValueChange={(v) => updateRoleMutation.mutate({ userId: u.id, role: v })}
+                onValueChange={(v) => updateRoleMutation.mutate({ userId: u.id, role: v as "owner" | "instructor" | "moderator" | "student" })}
               >
                 <SelectTrigger className="w-24 h-8 text-xs">
                   <SelectValue />

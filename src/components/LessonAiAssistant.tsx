@@ -30,7 +30,13 @@ async function fetchTextAttachment(url?: string | null): Promise<string> {
   }
 }
 
-export function LessonAiAssistant({ lessons }: { lessons: LessonLike[] }) {
+export function LessonAiAssistant({
+  lessons,
+  courseTitle,
+}: {
+  lessons: LessonLike[];
+  courseTitle?: string;
+}) {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
