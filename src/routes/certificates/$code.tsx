@@ -24,11 +24,16 @@ function CertificateVerify() {
         };
       }
       try {
-        const { data, error } = await supabase
-          .from("certificates")
-          .select("code,issued_at,user:profiles(full_name),course:courses(title)")
-          .eq("code", code)
-          .maybeSingle();
+        const { data: rows, error } = await supabase.rpc("verify_certificate", { _code: code });
+        const row = rows?.[0];
+        const data = row
+          ? {
+              code: row.code,
+              issued_at: row.issued_at,
+              user: { full_name: row.full_name },
+              course: { title: row.course_title },
+            }
+          : null;
         if (error || !data) {
           return {
             code: code,

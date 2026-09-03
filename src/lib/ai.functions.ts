@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const MODEL = "google/gemini-3.7-flash";
 const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
@@ -43,6 +44,7 @@ const askSchema = z.object({
 });
 
 export const askLessonAI = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => askSchema.parse(data))
   .handler(async ({ data }) => {
     const result = await callGateway([
@@ -69,6 +71,7 @@ const genSchema = z.object({
 
 /** توليد ملخص/سياق/وصف أو أسئلة اختبار للمدرّب من نص الدرس. */
 export const generateLessonContent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => genSchema.parse(data))
   .handler(async ({ data }) => {
     const instructions: Record<string, string> = {

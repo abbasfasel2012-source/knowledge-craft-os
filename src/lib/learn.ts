@@ -136,6 +136,7 @@ export async function saveLessonProgress(params: {
  * عند إنهاء كل الدروس (وهذا ما يُصدر الشهادة تلقائياً على الخادم).
  */
 export async function recomputeCourseProgress(courseId: string, userId: string) {
+  void userId;
   if (!isSupabaseConfigured) return 100;
   try {
     const [{ count: total }, { count: done }] = await Promise.all([
@@ -153,17 +154,13 @@ export async function recomputeCourseProgress(courseId: string, userId: string) 
 
     const totalCount = total ?? 0;
     const doneCount = done ?? 0;
-    const progress = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+    const local = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
-    await supabase
-      .from("enrollments")
-      .update({
-        progress,
-        completed_at: progress >= 100 ? new Date().toISOString() : null,
-      })
-      .eq("course_id", courseId)
-      .eq("user_id", userId);
-    return progress;
+    // التقدّم يُحتسب على الخادم من الدروس المكتملة فعلياً (لا يمكن للمتدرب تزويره).
+    const { data: serverProgress } = await supabase.rpc("recompute_enrollment_progress", {
+      _course_id: courseId,
+    });
+    return typeof serverProgress === "number" ? serverProgress : local;
   } catch {
     return 100;
   }

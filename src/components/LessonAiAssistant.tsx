@@ -73,7 +73,7 @@ export function LessonAiAssistant({
         .join("\n\n")
         .slice(0, 8000);
 
-      const title = lessons.map((l) => l.title).join("، ");
+      const title = [courseTitle, ...lessons.map((l) => l.title)].filter(Boolean).join("، ");
       const result = await askLessonAI({ data: { question: q, context, title } });
 
       if (result.ok) {
