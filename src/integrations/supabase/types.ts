@@ -1049,7 +1049,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      recompute_enrollment_progress: {
+        Args: { _course_id: string }
+        Returns: number
+      }
+      verify_certificate: {
+        Args: { _code: string }
+        Returns: {
+          code: string
+          course_title: string
+          full_name: string
+          issued_at: string
+        }[]
+      }
     }
     Enums: {
       app_role: "owner" | "instructor" | "moderator" | "student"
