@@ -226,15 +226,16 @@ function LessonForm({
   const [saving, setSaving] = useState(false);
 
   async function handleUpload(field: "video" | "pdf" | "audio", file: File) {
+    const id = toast.loading("جارٍ الرفع...");
     try {
-      toast.info("جارٍ الرفع...");
       const url = await uploadMedia(file, field);
       if (field === "video") setVideoUrl(url);
       if (field === "pdf") setPdfUrl(url);
       if (field === "audio") setAudioUrl(url);
-      toast.success("تم الرفع");
+      toast.success("تم الرفع بنجاح", { id });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "فشل الرفع");
+      const msg = e instanceof Error ? e.message : "فشل الرفع";
+      toast.error(msg, { id });
     }
   }
 

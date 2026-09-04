@@ -3,6 +3,7 @@ import { Upload, X, CheckCircle2, AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadMedia } from "@/lib/storage";
 import { calculateVideoDuration, validateVideoFile } from "@/lib/video-optimizer";
 
 interface VideoUploadCardProps {
@@ -49,31 +50,8 @@ export function VideoUploadCard({ courseId, onUploaded }: VideoUploadCardProps) 
     setIsUploading(true);
     setError("");
     try {
-      // Upload the actual file to Supabase Storage
-      const path = `video/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from("course-media")
-        .upload(path, file, {
-          onUploadProgress: (evt: { loaded: number; total?: number }) => {
-            if (evt.total) setProgress(Math.round((evt.loaded / evt.total) * 90));
-          },
-        } as never);
-
-      if (uploadError) {
-        setError(`فشل الرفع: ${uploadError.message}`);
-        setIsUploading(false);
-        return;
-      }
-
-      setProgress(90);
-      const { data: signedData, error: signError } = await supabase.storage
-        .from("course-media")
-        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
-      if (signError || !signedData?.signedUrl) {
-        setError("تعذّر إنشاء رابط الفيديو");
-        setIsUploading(false);
-        return;
-      }
+      // Upload using the shared uploadMedia helper (handles auth check + progress)
+      const videoUrl = await uploadMedia(file, "video", (pct) => setProgress(pct));
 
       // Determine next lesson position
       const { data: existing } = await supabase
@@ -90,14 +68,18 @@ export function VideoUploadCard({ courseId, onUploaded }: VideoUploadCardProps) 
         title: metadata.title,
         type: "video",
         content: metadata.description || null,
-        video_url: signedData.signedUrl,
+        video_url: videoUrl,
         duration_minutes: Math.max(1, Math.round(durationSeconds / 60)),
         position: nextPos,
         is_preview: false,
       });
 
       if (insertError) {
-        setError(`فشل حفظ الدرس: ${insertError.message}`);
+        if (insertError.message.includes("row-level") || insertError.code === "42501") {
+          setError("ليس لديك صلاحية إضافة دروس. تأكد من أن حسابك مسجّل كمشرف.");
+        } else {
+          setError(`فشل حفظ الدرس: ${insertError.message}`);
+        }
         setIsUploading(false);
         return;
       }
