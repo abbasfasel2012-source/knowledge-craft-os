@@ -30,6 +30,8 @@ export async function uploadMedia(
       xhr.open("POST", url);
       xhr.setRequestHeader("Authorization", `Bearer ${session.access_token}`);
       xhr.setRequestHeader("x-upsert", "false");
+      xhr.setRequestHeader("cache-control", "max-age=3600");
+      xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 90));
       };
@@ -42,9 +44,8 @@ export async function uploadMedia(
         }
       };
       xhr.onerror = () => reject(new Error("خطأ في الشبكة أثناء الرفع"));
-      const formData = new FormData();
-      formData.append("", file);
-      xhr.send(formData);
+      // Raw body upload — sending FormData corrupts the stored object (multipart wrapper).
+      xhr.send(file);
     });
   } else {
     const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
