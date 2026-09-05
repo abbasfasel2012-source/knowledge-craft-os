@@ -350,6 +350,11 @@ function CourseDetail() {
 
   const handleVideoError = async () => {
     if (!current?.video_url || videoRetryRef.current >= 1) {
+      if (currentIndex < playable.length - 1) {
+        setCurrentIndex((index) => index + 1);
+        toast.info("تم تجاوز فيديو غير متاح وتشغيل الدرس التالي");
+        return;
+      }
       setVideoError(true);
       return;
     }
