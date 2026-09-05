@@ -507,12 +507,12 @@ function CourseDetail() {
   return (
     <div className="space-y-6 px-4 py-6">
       {/* المشغّل */}
-      {current?.video_url && currentVideoSrc && !videoError ? (
+      {current?.video_url && !videoError ? (
         <div className="overflow-hidden rounded-2xl bg-black aspect-video">
           <video
             ref={videoRef}
-            key={`${current.id}-${videoSrcOverride ?? currentVideoSrc}`}
-            src={videoSrcOverride ?? currentVideoSrc}
+            key={`${current.id}-${videoSrcOverride ?? currentVideoSrc ?? current.video_url}`}
+            src={videoSrcOverride ?? currentVideoSrc ?? current.video_url}
             controls
             playsInline
             className="h-full w-full object-contain"
