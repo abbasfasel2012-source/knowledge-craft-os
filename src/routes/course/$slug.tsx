@@ -56,6 +56,8 @@ function CourseDetail() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [videoError, setVideoError] = useState(false);
+  const [videoSrcOverride, setVideoSrcOverride] = useState<string>();
+  const videoRetryRef = useRef(0);
   const [busy, setBusy] = useState(false);
 
   const demoCourse = DEMO_COURSES.find((c) => c.slug === slug);
@@ -335,10 +337,31 @@ function CourseDetail() {
   }
 
   useEffect(() => {
+    setVideoError(false);
+    setVideoSrcOverride(undefined);
+    videoRetryRef.current = 0;
+  }, [current?.id, currentVideoSrc]);
+
+  useEffect(() => {
     // استئناف من آخر موضع مشاهدة محفوظ
     const row = progressRows?.find((p) => p.lesson_id === current?.id);
     if (videoRef.current && row?.last_position) videoRef.current.currentTime = row.last_position;
   }, [current?.id, progressRows]);
+
+  const handleVideoError = async () => {
+    if (!current?.video_url || videoRetryRef.current >= 1) {
+      setVideoError(true);
+      return;
+    }
+    videoRetryRef.current += 1;
+    const freshUrl = await resolveMedia(current.video_url, true);
+    if (!freshUrl) {
+      setVideoError(true);
+      return;
+    }
+    setVideoSrcOverride(freshUrl);
+    setVideoError(false);
+  };
 
   const requireLogin = () => {
     if (!user) {
@@ -483,12 +506,14 @@ function CourseDetail() {
         <div className="overflow-hidden rounded-2xl bg-black aspect-video">
           <video
             ref={videoRef}
-            src={currentVideoSrc}
+            key={`${current.id}-${videoSrcOverride ?? currentVideoSrc}`}
+            src={videoSrcOverride ?? currentVideoSrc}
             controls
             playsInline
             className="h-full w-full object-contain"
             poster={posterSrc}
-            onError={() => setVideoError(true)}
+            preload="metadata"
+            onError={() => void handleVideoError()}
             onPause={persistPosition}
             onEnded={handleComplete}
           />
@@ -505,7 +530,7 @@ function CourseDetail() {
           <div className="px-4 text-center">
             <Play className="mx-auto h-12 w-12 text-muted-foreground" />
             <p className="mt-2 text-sm text-muted-foreground">
-              {videoError ? "تعذّر تشغيل هذا الدرس، الرابط قد يكون منتهياً." : "لا يوجد فيديو متاح"}
+              {videoError ? "تعذّر تشغيل ملف الفيديو. أعد رفعه بصيغة MP4 أو WebM." : "لا يوجد فيديو متاح"}
             </p>
           </div>
         </div>
