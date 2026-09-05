@@ -34,7 +34,7 @@ export async function resolveMedia(
 export function useMediaUrl(url?: string | null): string | undefined {
   const path = storagePath(url);
   const [resolved, setResolved] = useState<string | undefined>(
-    path ? cache.get(path)?.url : (url ?? undefined),
+    path ? (cache.get(path)?.url ?? (url?.startsWith("http") ? url : undefined)) : (url ?? undefined),
   );
 
   useEffect(() => {
@@ -52,6 +52,7 @@ export function useMediaUrl(url?: string | null): string | undefined {
       setResolved(cached.url);
       return;
     }
+    if (url.startsWith("http")) setResolved(url);
     void resolveMedia(url).then((u) => {
       if (active) setResolved(u);
     });
