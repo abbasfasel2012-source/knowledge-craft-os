@@ -1,14 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const BUCKET = "course-media";
-const TEN_YEARS = 60 * 60 * 24 * 365 * 10;
+const STORAGE_PREFIX = "course-media://";
 
 function safeName(name: string) {
   return name.replace(/[^\w.-]+/g, "_");
 }
 
 /**
- * Uploads a file to the course-media bucket and returns a long-lived signed URL.
+ * Uploads a file to the private course-media bucket and returns a stable storage reference.
  * Uses XHR for upload progress tracking; falls back to supabase client if needed.
  */
 export async function uploadMedia(
@@ -60,14 +60,6 @@ export async function uploadMedia(
     }
   }
 
-  if (onProgress) onProgress(95);
-
-  const { data, error: signError } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(path, TEN_YEARS);
-  if (signError || !data?.signedUrl)
-    throw new Error(signError?.message ?? "تعذّر إنشاء رابط الملف");
-
   if (onProgress) onProgress(100);
-  return data.signedUrl;
+  return `${STORAGE_PREFIX}${path}`;
 }

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Bot, Send, Sparkles, Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { askLessonAI } from "@/lib/ai.functions";
 
 interface LessonLike {
@@ -74,7 +75,9 @@ export function LessonAiAssistant({
         .slice(0, 8000);
 
       const title = [courseTitle, ...lessons.map((l) => l.title)].filter(Boolean).join("، ");
-      const result = await askLessonAI({ data: { question: q, context, title } });
+      const result = await askLessonAI({
+        data: { question: q, context, title, history: messages.slice(-10) },
+      });
 
       if (result.ok) {
         setMessages((prev) => [
@@ -123,7 +126,24 @@ export function LessonAiAssistant({
               m.role === "user" ? "bg-gold/10 text-foreground" : "bg-background/60 text-foreground"
             }`}
           >
-            {m.text}
+            {m.role === "assistant" ? (
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                  strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                  ul: ({ children }) => <ul className="my-2 list-disc space-y-1 pr-5">{children}</ul>,
+                  ol: ({ children }) => <ol className="my-2 list-decimal space-y-1 pr-5">{children}</ol>,
+                  li: ({ children }) => <li>{children}</li>,
+                  code: ({ children }) => (
+                    <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">{children}</code>
+                  ),
+                }}
+              >
+                {m.text}
+              </ReactMarkdown>
+            ) : (
+              m.text
+            )}
           </div>
         ))}
         {isLoading && (
