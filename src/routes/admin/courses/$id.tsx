@@ -25,6 +25,8 @@ import {
   HelpCircle,
   Link as LinkIcon,
   Headphones,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { uploadMedia } from "@/lib/storage";
 
@@ -38,6 +40,7 @@ function EditCourse() {
 
   const queryClient = useQueryClient();
   const [showLessonForm, setShowLessonForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const { data: course } = useQuery({
     queryKey: ["admin-course", id],
