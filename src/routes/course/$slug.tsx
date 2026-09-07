@@ -14,6 +14,10 @@ import {
   HelpCircle,
   GraduationCap,
   Loader2,
+  Maximize2,
+  Pause,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { toast } from "sonner";
 import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
@@ -56,12 +60,16 @@ function CourseDetail() {
   const { user } = useSession();
   const queryClient = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const playerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [videoError, setVideoError] = useState(false);
   const [videoSrcOverride, setVideoSrcOverride] = useState<string>();
   const [videoPlaying, setVideoPlaying] = useState(false);
   const videoRetryRef = useRef(0);
   const [busy, setBusy] = useState(false);
+  const [videoTime, setVideoTime] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [videoMuted, setVideoMuted] = useState(false);
 
   const demoCourse = DEMO_COURSES.find((c) => c.slug === slug);
 
@@ -343,6 +351,8 @@ function CourseDetail() {
     setVideoError(false);
     setVideoSrcOverride(undefined);
     setVideoPlaying(false);
+    setVideoTime(0);
+    setVideoDuration(0);
     videoRetryRef.current = 0;
   }, [current?.id, currentVideoSrc]);
 
@@ -389,6 +399,25 @@ function CourseDetail() {
     }
     setVideoSrcOverride(freshUrl);
     setVideoError(false);
+  };
+
+  const toggleVideoPlayback = () => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) void videoRef.current.play().catch(() => undefined);
+    else videoRef.current.pause();
+  };
+
+  const formatVideoTime = (seconds: number) => {
+    if (!Number.isFinite(seconds)) return "00:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const toggleFullscreen = async () => {
+    if (!playerRef.current) return;
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await playerRef.current.requestFullscreen();
   };
 
   const requireLogin = () => {
@@ -531,20 +560,26 @@ function CourseDetail() {
     <div className="space-y-6 px-4 py-6">
       {/* المشغّل */}
       {current?.video_url && !videoError && (videoSrcOverride || currentVideoSrc) ? (
-        <div className="relative overflow-hidden rounded-2xl bg-black aspect-video">
+        <div ref={playerRef} className="group relative aspect-video overflow-hidden rounded-2xl bg-black">
           <video
             ref={videoRef}
             key={`${current.id}-${videoSrcOverride ?? currentVideoSrc ?? current.video_url}`}
             src={videoSrcOverride ?? currentVideoSrc ?? current.video_url}
-            controls
             playsInline
-            className="h-full w-full object-contain"
+            className="h-full w-full cursor-pointer object-contain"
             poster={posterSrc}
             preload="metadata"
             onError={() => void handleVideoError()}
             onPlay={() => setVideoPlaying(true)}
+            onClick={toggleVideoPlayback}
             onLoadedData={() => setVideoError(false)}
-            onPause={persistPosition}
+            onLoadedMetadata={(event) => setVideoDuration(event.currentTarget.duration)}
+            onTimeUpdate={(event) => setVideoTime(event.currentTarget.currentTime)}
+            onVolumeChange={(event) => setVideoMuted(event.currentTarget.muted)}
+            onPause={() => {
+              setVideoPlaying(false);
+              persistPosition();
+            }}
             onEnded={handleComplete}
           />
           {!videoPlaying && (
@@ -554,11 +589,43 @@ function CourseDetail() {
               onClick={() => {
                 void videoRef.current?.play().catch(() => undefined);
               }}
-              className="absolute inset-0 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-gold text-gold-foreground shadow-lg transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white"
+              className="absolute inset-0 m-auto flex h-20 w-20 items-center justify-center rounded-full bg-gold text-gold-foreground shadow-2xl transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white"
             >
-              <Play className="ms-1 h-8 w-8 fill-current" />
+              <Play className="ms-1 h-10 w-10 fill-current" />
             </button>
           )}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 pb-3 pt-12 sm:px-5 sm:pb-4">
+            <input
+              aria-label="تقدم الفيديو"
+              type="range"
+              min={0}
+              max={videoDuration || 0}
+              step={0.1}
+              value={Math.min(videoTime, videoDuration || 0)}
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                if (videoRef.current) videoRef.current.currentTime = next;
+                setVideoTime(next);
+              }}
+              className="pointer-events-auto mb-2 h-1.5 w-full cursor-pointer accent-[hsl(var(--gold))]"
+            />
+            <div className="flex items-center gap-3 text-white">
+              <button type="button" aria-label={videoPlaying ? "إيقاف الفيديو" : "تشغيل الفيديو"} onClick={toggleVideoPlayback} className="pointer-events-auto rounded p-1 hover:bg-white/20">
+                {videoPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 fill-current" />}
+              </button>
+              <button type="button" aria-label={videoMuted ? "تشغيل الصوت" : "كتم الصوت"} onClick={() => {
+                if (!videoRef.current) return;
+                videoRef.current.muted = !videoRef.current.muted;
+                setVideoMuted(videoRef.current.muted);
+              }} className="pointer-events-auto rounded p-1 hover:bg-white/20">
+                {videoMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+              </button>
+              <span className="text-xs tabular-nums">{formatVideoTime(videoTime)} / {formatVideoTime(videoDuration)}</span>
+              <button type="button" aria-label="ملء الشاشة" onClick={() => void toggleFullscreen()} className="pointer-events-auto ms-auto rounded p-1 hover:bg-white/20">
+                <Maximize2 className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
         </div>
       ) : current?.video_url && !videoError ? (
         <div className="flex aspect-video items-center justify-center rounded-2xl bg-black text-white">
