@@ -13,6 +13,7 @@ import {
   Headphones,
   HelpCircle,
   GraduationCap,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
@@ -58,6 +59,7 @@ function CourseDetail() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [videoError, setVideoError] = useState(false);
   const [videoSrcOverride, setVideoSrcOverride] = useState<string>();
+  const [videoPlaying, setVideoPlaying] = useState(false);
   const videoRetryRef = useRef(0);
   const [busy, setBusy] = useState(false);
 
@@ -340,6 +342,7 @@ function CourseDetail() {
   useEffect(() => {
     setVideoError(false);
     setVideoSrcOverride(undefined);
+    setVideoPlaying(false);
     videoRetryRef.current = 0;
   }, [current?.id, currentVideoSrc]);
 
@@ -527,8 +530,8 @@ function CourseDetail() {
   return (
     <div className="space-y-6 px-4 py-6">
       {/* المشغّل */}
-      {current?.video_url && !videoError ? (
-        <div className="overflow-hidden rounded-2xl bg-black aspect-video">
+      {current?.video_url && !videoError && (videoSrcOverride || currentVideoSrc) ? (
+        <div className="relative overflow-hidden rounded-2xl bg-black aspect-video">
           <video
             ref={videoRef}
             key={`${current.id}-${videoSrcOverride ?? currentVideoSrc ?? current.video_url}`}
@@ -539,9 +542,30 @@ function CourseDetail() {
             poster={posterSrc}
             preload="metadata"
             onError={() => void handleVideoError()}
+            onPlay={() => setVideoPlaying(true)}
+            onLoadedData={() => setVideoError(false)}
             onPause={persistPosition}
             onEnded={handleComplete}
           />
+          {!videoPlaying && (
+            <button
+              type="button"
+              aria-label="تشغيل الفيديو"
+              onClick={() => {
+                void videoRef.current?.play().catch(() => undefined);
+              }}
+              className="absolute inset-0 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-gold text-gold-foreground shadow-lg transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white"
+            >
+              <Play className="ms-1 h-8 w-8 fill-current" />
+            </button>
+          )}
+        </div>
+      ) : current?.video_url && !videoError ? (
+        <div className="flex aspect-video items-center justify-center rounded-2xl bg-black text-white">
+          <div className="text-center">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-gold" />
+            <p className="mt-2 text-sm text-white/70">جارٍ تجهيز الفيديو...</p>
+          </div>
         </div>
       ) : current?.audio_url && !current.video_url ? (
         <div className="rounded-2xl border border-border bg-card p-4">
