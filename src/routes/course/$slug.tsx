@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 import { isStaff, useSession } from "@/lib/session";
+import { getPreviewMediaUrl } from "@/lib/media.functions";
 import { useMediaUrl, resolveMedia } from "@/lib/media";
 import { CourseComments } from "@/components/CourseComments";
 import { VideoUploadCard } from "@/components/VideoUploadCard";
