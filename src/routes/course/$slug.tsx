@@ -18,6 +18,9 @@ import {
   Pause,
   Volume2,
   VolumeX,
+  Gauge,
+  RotateCcw,
+  RotateCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
@@ -70,6 +73,8 @@ function CourseDetail() {
   const [videoTime, setVideoTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
   const [videoMuted, setVideoMuted] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [videoQuality, setVideoQuality] = useState("auto");
 
   const demoCourse = DEMO_COURSES.find((c) => c.slug === slug);
 
@@ -420,6 +425,15 @@ function CourseDetail() {
     else await playerRef.current.requestFullscreen();
   };
 
+  const seekVideo = (seconds: number) => {
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = Math.max(
+      0,
+      Math.min(videoDuration, videoRef.current.currentTime + seconds),
+    );
+    setVideoTime(videoRef.current.currentTime);
+  };
+
   const requireLogin = () => {
     if (!user) {
       toast.error("سجّل دخولك أولاً");
@@ -620,7 +634,29 @@ function CourseDetail() {
               }} className="pointer-events-auto rounded p-1 hover:bg-white/20">
                 {videoMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
               </button>
+              <button type="button" aria-label="تأخير 5 ثواني" onClick={() => seekVideo(-5)} className="pointer-events-auto rounded p-1 hover:bg-white/20">
+                <RotateCcw className="h-5 w-5" />
+              </button>
+              <button type="button" aria-label="تقديم 5 ثواني" onClick={() => seekVideo(5)} className="pointer-events-auto rounded p-1 hover:bg-white/20">
+                <RotateCw className="h-5 w-5" />
+              </button>
               <span className="text-xs tabular-nums">{formatVideoTime(videoTime)} / {formatVideoTime(videoDuration)}</span>
+              <label className="pointer-events-auto hidden items-center gap-1 text-xs sm:flex">
+                <Gauge className="h-4 w-4 text-green-400" />
+                <select aria-label="سرعة التشغيل" value={playbackRate} onChange={(event) => {
+                  const rate = Number(event.target.value);
+                  setPlaybackRate(rate);
+                  if (videoRef.current) videoRef.current.playbackRate = rate;
+                }} className="bg-transparent text-white outline-none">
+                  {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => <option key={rate} value={rate} className="bg-black text-white">{rate}x</option>)}
+                </select>
+              </label>
+              <label className="pointer-events-auto hidden text-xs sm:block">
+                <select aria-label="جودة الفيديو" value={videoQuality} onChange={(event) => setVideoQuality(event.target.value)} className="bg-transparent text-white outline-none">
+                  <option value="auto" className="bg-black text-white">الجودة: تلقائي</option>
+                  <option value="source" className="bg-black text-white">الجودة: المصدر</option>
+                </select>
+              </label>
               <button type="button" aria-label="ملء الشاشة" onClick={() => void toggleFullscreen()} className="pointer-events-auto ms-auto rounded p-1 hover:bg-white/20">
                 <Maximize2 className="h-5 w-5" />
               </button>
@@ -794,17 +830,11 @@ function CourseDetail() {
         <TabsContent value="materials" className="mt-4 space-y-2">
           {materials.length > 0 ? (
             materials.map((m) => (
-              <button
+              <MaterialItem
                 key={m.id}
-                onClick={() => handleDownload(m.url, m.title)}
-                className="flex w-full items-center justify-between rounded-lg border border-border bg-card p-3 text-right transition-colors hover:bg-muted"
-              >
-                <div>
-                  <p className="text-sm font-semibold">{m.title}</p>
-                  <p className="text-xs text-muted-foreground">{m.kind}</p>
-                </div>
-                <Download className="h-4 w-4 text-gold" />
-              </button>
+                material={m}
+                onDownload={() => handleDownload(m.url, m.title)}
+              />
             ))
           ) : (
             <EmptyBox text="لا توجد مرفقات بعد" />
@@ -848,7 +878,7 @@ function CourseDetail() {
         </TabsContent>
       </Tabs>
 
-      {isStaff(user?.role) && (
+      {user?.role === "owner" && (
         <div className="mt-8 border-t border-border pt-6">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-lg font-bold">إدارة الدورة</h3>
@@ -861,6 +891,46 @@ function CourseDetail() {
             </Link>
           </div>
           <VideoUploadCard courseId={course.id} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MaterialItem({
+  material,
+  onDownload,
+}: {
+  material: { id: string; title: string; url: string; kind: string };
+  onDownload: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const url = useMediaUrl(material.url);
+  const isPdf = material.kind === "PDF" || material.url.toLowerCase().includes(".pdf");
+  const isImage = /\.(png|jpe?g|webp|gif)(\?|$)/i.test(material.url);
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="flex items-center justify-between gap-3 p-3 text-right">
+        <button type="button" onClick={() => setOpen((value) => !value)} className="min-w-0 flex-1 text-right hover:text-green-600">
+          <p className="truncate text-sm font-semibold">{material.title}</p>
+          <p className="text-xs text-muted-foreground">{material.kind} • {open ? "إخفاء المعاينة" : "عرض الملف"}</p>
+        </button>
+        <button type="button" aria-label={`تنزيل ${material.title}`} onClick={onDownload} className="rounded p-2 text-green-600 hover:bg-green-500/10">
+          <Download className="h-4 w-4" />
+        </button>
+      </div>
+      {open && url && (
+        <div className="border-t border-border bg-muted/30 p-2">
+          {isPdf ? (
+            <iframe title={material.title} src={url} className="h-[420px] w-full rounded bg-white" />
+          ) : isImage ? (
+            <img src={url} alt={material.title} className="max-h-[420px] w-full rounded object-contain" />
+          ) : (
+            <a href={url} target="_blank" rel="noreferrer" className="block rounded bg-background p-4 text-center text-sm font-semibold text-green-600 hover:underline">
+              فتح الملف في نافذة جديدة
+            </a>
+          )}
         </div>
       )}
     </div>

@@ -31,6 +31,7 @@ function AdminCourses() {
   const { user } = useSession();
   const queryClient = useQueryClient();
   const [creating, setCreating] = useState(false);
+  const canUpload = user?.role === "owner";
 
   const { data: courses } = useQuery({
     queryKey: ["admin-courses"],
@@ -73,6 +74,7 @@ function AdminCourses() {
         <CourseForm
           categories={categories ?? []}
           userId={user?.id ?? ""}
+          canUpload={canUpload}
           onClose={() => setCreating(false)}
           onSaved={() => {
             setCreating(false);
@@ -133,11 +135,13 @@ function AdminCourses() {
 function CourseForm({
   categories,
   userId,
+  canUpload,
   onClose,
   onSaved,
 }: {
   categories: { id: string; name: string; slug: string }[];
   userId: string;
+  canUpload: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -154,6 +158,10 @@ function CourseForm({
 
   async function handleUploadCover(file: File) {
     try {
+      if (!canUpload) {
+        toast.error("رفع الملفات متاح للمالك فقط");
+        return;
+      }
       const url = await uploadMedia(file, "covers");
       setCoverUrl(url);
       toast.success("تم رفع الصورة");
@@ -282,18 +290,20 @@ function CourseForm({
               onChange={(e) => setCoverUrl(e.target.value)}
               placeholder="رابط الصورة أو ارفع"
             />
-            <label className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-card hover:bg-muted">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleUploadCover(f);
-                }}
-              />
-              <Upload className="h-4 w-4" />
-            </label>
+            {canUpload && (
+              <label className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-card hover:bg-muted">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleUploadCover(f);
+                  }}
+                />
+                <Upload className="h-4 w-4" />
+              </label>
+            )}
           </div>
         </div>
         <Button

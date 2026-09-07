@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,9 +25,14 @@ export const Route = createFileRoute("/admin/quizzes")({
 });
 
 function AdminQuizzes() {
+  const { user } = useSession();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingQuiz, setEditingQuiz] = useState<string | null>(null);
+
+  if (user?.role !== "owner") {
+    return <div className="p-6 text-center text-sm text-muted-foreground">إدارة الاختبارات متاحة للمالك فقط.</div>;
+  }
 
   const { data: quizzes } = useQuery({
     queryKey: ["admin-quizzes"],

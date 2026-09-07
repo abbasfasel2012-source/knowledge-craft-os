@@ -29,6 +29,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { uploadMedia } from "@/lib/storage";
+import { useSession } from "@/lib/session";
 
 export const Route = createFileRoute("/admin/courses/$id")({
   head: () => ({ meta: [{ title: "تحرير الدورة — تدريب" }] }),
@@ -37,6 +38,8 @@ export const Route = createFileRoute("/admin/courses/$id")({
 
 function EditCourse() {
   const { id } = Route.useParams();
+  const { user } = useSession();
+  const canUpload = user?.role === "owner";
 
   const queryClient = useQueryClient();
   const [showLessonForm, setShowLessonForm] = useState(false);
@@ -288,6 +291,10 @@ function LessonForm({
   const [saving, setSaving] = useState(false);
 
   async function handleUpload(field: "video" | "pdf" | "audio", file: File) {
+    if (!canUpload) {
+      toast.error("رفع الملفات متاح للمالك فقط");
+      return;
+    }
     const id = toast.loading("جارٍ الرفع... 0%");
     try {
       const url = await uploadMedia(file, field, (pct) =>
@@ -403,7 +410,7 @@ function LessonForm({
                 onChange={(e) => setVideoUrl(e.target.value)}
                 placeholder="رابط الفيديو"
               />
-              <label className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-card hover:bg-muted">
+              <label className={canUpload ? "inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-card hover:bg-muted" : "hidden"}>
                 <input
                   type="file"
                   accept="video/*"
@@ -427,7 +434,7 @@ function LessonForm({
                 onChange={(e) => setPdfUrl(e.target.value)}
                 placeholder="رابط PDF"
               />
-              <label className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-card hover:bg-muted">
+              <label className={canUpload ? "inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-card hover:bg-muted" : "hidden"}>
                 <input
                   type="file"
                   accept="application/pdf"
@@ -450,7 +457,7 @@ function LessonForm({
               onChange={(e) => setAudioUrl(e.target.value)}
               placeholder="رابط الصوت"
             />
-            <label className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-card hover:bg-muted">
+            <label className={canUpload ? "inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-card hover:bg-muted" : "hidden"}>
               <input
                 type="file"
                 accept="audio/*"
