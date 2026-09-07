@@ -167,37 +167,79 @@ function EditCourse() {
         )}
 
         <div className="space-y-2">
-          {lessons?.map((lesson) => (
-            <Card key={lesson.id} className="border-border">
-              <CardContent className="flex items-center gap-3 p-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
-                  {lesson.type === "video" ? (
-                    <Play className="h-4 w-4" />
-                  ) : lesson.type === "pdf" ? (
-                    <FileText className="h-4 w-4" />
-                  ) : lesson.type === "quiz" ? (
-                    <HelpCircle className="h-4 w-4" />
-                  ) : lesson.type === "link" ? (
-                    <LinkIcon className="h-4 w-4" />
-                  ) : (
-                    <FileText className="h-4 w-4" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="line-clamp-1 text-sm font-medium">{lesson.title}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {lesson.type} • {lesson.duration_minutes} د
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {lessons?.map((lesson) =>
+            editingId === lesson.id ? (
+              <LessonForm
+                key={lesson.id}
+                courseId={id}
+                lesson={lesson as unknown as LessonRow}
+                onClose={() => setEditingId(null)}
+                onSaved={() => {
+                  setEditingId(null);
+                  queryClient.invalidateQueries({ queryKey: ["admin-course-lessons"] });
+                }}
+              />
+            ) : (
+              <Card key={lesson.id} className="border-border">
+                <CardContent className="flex items-center gap-3 p-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                    {lesson.type === "video" ? (
+                      <Play className="h-4 w-4" />
+                    ) : lesson.type === "pdf" ? (
+                      <FileText className="h-4 w-4" />
+                    ) : lesson.type === "quiz" ? (
+                      <HelpCircle className="h-4 w-4" />
+                    ) : lesson.type === "link" ? (
+                      <LinkIcon className="h-4 w-4" />
+                    ) : (
+                      <FileText className="h-4 w-4" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-1 text-sm font-medium">{lesson.title}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {lesson.type} • {lesson.duration_minutes} د
+                    </p>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="تعديل الدرس"
+                    onClick={() => {
+                      setShowLessonForm(false);
+                      setEditingId(lesson.id);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="حذف الدرس"
+                    onClick={async () => {
+                      if (!window.confirm(`حذف الدرس "${lesson.title}"؟`)) return;
+                      const { error } = await supabase.from("lessons").delete().eq("id", lesson.id);
+                      if (error) {
+                        toast.error(error.message);
+                        return;
+                      }
+                      toast.success("تم حذف الدرس");
+                      queryClient.invalidateQueries({ queryKey: ["admin-course-lessons"] });
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ),
+          )}
           {(!lessons || lessons.length === 0) && (
             <p className="py-4 text-center text-sm text-muted-foreground">
               لا توجد دروس. أضف أول درس!
             </p>
           )}
         </div>
+
       </div>
     </div>
   );
