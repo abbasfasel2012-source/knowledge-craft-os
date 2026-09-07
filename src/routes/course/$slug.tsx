@@ -589,9 +589,9 @@ function CourseDetail() {
               onClick={() => {
                 void videoRef.current?.play().catch(() => undefined);
               }}
-              className="absolute inset-0 m-auto flex h-20 w-20 items-center justify-center rounded-full bg-gold text-gold-foreground shadow-2xl transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white"
+              className="absolute inset-0 m-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-600 text-white shadow-xl transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-300 sm:h-16 sm:w-16"
             >
-              <Play className="ms-1 h-10 w-10 fill-current" />
+              <Play className="ms-1 h-7 w-7 fill-current sm:h-8 sm:w-8" />
             </button>
           )}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 pb-3 pt-12 sm:px-5 sm:pb-4">
@@ -607,10 +607,10 @@ function CourseDetail() {
                 if (videoRef.current) videoRef.current.currentTime = next;
                 setVideoTime(next);
               }}
-              className="pointer-events-auto mb-2 h-1.5 w-full cursor-pointer accent-[hsl(var(--gold))]"
+              className="pointer-events-auto mb-2 h-1.5 w-full cursor-pointer accent-green-500"
             />
             <div className="flex items-center gap-3 text-white">
-              <button type="button" aria-label={videoPlaying ? "إيقاف الفيديو" : "تشغيل الفيديو"} onClick={toggleVideoPlayback} className="pointer-events-auto rounded p-1 hover:bg-white/20">
+              <button type="button" aria-label={videoPlaying ? "إيقاف الفيديو" : "تشغيل الفيديو"} onClick={toggleVideoPlayback} className="pointer-events-auto rounded p-1 text-green-400 hover:bg-white/20">
                 {videoPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 fill-current" />}
               </button>
               <button type="button" aria-label={videoMuted ? "تشغيل الصوت" : "كتم الصوت"} onClick={() => {
