@@ -303,7 +303,9 @@ function LessonForm({
     <Card className="mb-4 border-border">
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-sm">
-          درس جديد <X className="h-4 w-4 cursor-pointer" onClick={onClose} />
+          {lesson ? "تعديل الدرس" : "درس جديد"}{" "}
+          <X className="h-4 w-4 cursor-pointer" onClick={onClose} />
+
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
