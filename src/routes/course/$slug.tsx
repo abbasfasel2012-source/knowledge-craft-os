@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 import { isStaff, useSession } from "@/lib/session";
+import { getPreviewMediaUrl } from "@/lib/media.functions";
 import { useMediaUrl, resolveMedia } from "@/lib/media";
 import { CourseComments } from "@/components/CourseComments";
 import { VideoUploadCard } from "@/components/VideoUploadCard";
@@ -341,6 +342,25 @@ function CourseDetail() {
     setVideoSrcOverride(undefined);
     videoRetryRef.current = 0;
   }, [current?.id, currentVideoSrc]);
+
+  // الزوار غير المسجّلين: توقيع رابط الدرس التعريفي عبر الخادم
+  useEffect(() => {
+    if (user || !current?.id || !current.is_preview || !current.video_url) return;
+    if (currentVideoSrc) return;
+    let active = true;
+    void getPreviewMediaUrl({ data: { lessonId: current.id, field: "video" } })
+      .then((r) => {
+        if (active && r?.url) {
+          setVideoSrcOverride(r.url);
+          setVideoError(false);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [user, current?.id, current?.is_preview, current?.video_url, currentVideoSrc]);
+
 
   useEffect(() => {
     // استئناف من آخر موضع مشاهدة محفوظ

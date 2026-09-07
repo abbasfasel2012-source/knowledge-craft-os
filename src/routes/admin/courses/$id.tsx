@@ -25,6 +25,8 @@ import {
   HelpCircle,
   Link as LinkIcon,
   Headphones,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { uploadMedia } from "@/lib/storage";
 
@@ -38,6 +40,7 @@ function EditCourse() {
 
   const queryClient = useQueryClient();
   const [showLessonForm, setShowLessonForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const { data: course } = useQuery({
     queryKey: ["admin-course", id],
@@ -167,68 +170,129 @@ function EditCourse() {
         )}
 
         <div className="space-y-2">
-          {lessons?.map((lesson) => (
-            <Card key={lesson.id} className="border-border">
-              <CardContent className="flex items-center gap-3 p-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
-                  {lesson.type === "video" ? (
-                    <Play className="h-4 w-4" />
-                  ) : lesson.type === "pdf" ? (
-                    <FileText className="h-4 w-4" />
-                  ) : lesson.type === "quiz" ? (
-                    <HelpCircle className="h-4 w-4" />
-                  ) : lesson.type === "link" ? (
-                    <LinkIcon className="h-4 w-4" />
-                  ) : (
-                    <FileText className="h-4 w-4" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="line-clamp-1 text-sm font-medium">{lesson.title}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {lesson.type} • {lesson.duration_minutes} د
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {lessons?.map((lesson) =>
+            editingId === lesson.id ? (
+              <LessonForm
+                key={lesson.id}
+                courseId={id}
+                lesson={lesson as unknown as LessonRow}
+                onClose={() => setEditingId(null)}
+                onSaved={() => {
+                  setEditingId(null);
+                  queryClient.invalidateQueries({ queryKey: ["admin-course-lessons"] });
+                }}
+              />
+            ) : (
+              <Card key={lesson.id} className="border-border">
+                <CardContent className="flex items-center gap-3 p-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                    {lesson.type === "video" ? (
+                      <Play className="h-4 w-4" />
+                    ) : lesson.type === "pdf" ? (
+                      <FileText className="h-4 w-4" />
+                    ) : lesson.type === "quiz" ? (
+                      <HelpCircle className="h-4 w-4" />
+                    ) : lesson.type === "link" ? (
+                      <LinkIcon className="h-4 w-4" />
+                    ) : (
+                      <FileText className="h-4 w-4" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-1 text-sm font-medium">{lesson.title}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {lesson.type} • {lesson.duration_minutes} د
+                    </p>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="تعديل الدرس"
+                    onClick={() => {
+                      setShowLessonForm(false);
+                      setEditingId(lesson.id);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="حذف الدرس"
+                    onClick={async () => {
+                      if (!window.confirm(`حذف الدرس "${lesson.title}"؟`)) return;
+                      const { error } = await supabase.from("lessons").delete().eq("id", lesson.id);
+                      if (error) {
+                        toast.error(error.message);
+                        return;
+                      }
+                      toast.success("تم حذف الدرس");
+                      queryClient.invalidateQueries({ queryKey: ["admin-course-lessons"] });
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ),
+          )}
           {(!lessons || lessons.length === 0) && (
             <p className="py-4 text-center text-sm text-muted-foreground">
               لا توجد دروس. أضف أول درس!
             </p>
           )}
         </div>
+
       </div>
     </div>
   );
 }
 
+type LessonRow = {
+  id: string;
+  title: string;
+  type: string;
+  content: string | null;
+  video_url: string | null;
+  pdf_url: string | null;
+  audio_url: string | null;
+  script_text: string | null;
+  ai_context: string | null;
+  summary: string | null;
+  duration_minutes: number;
+  is_preview: boolean;
+};
+
 function LessonForm({
   courseId,
+  lesson,
   onClose,
   onSaved,
 }: {
   courseId: string;
+  lesson?: LessonRow;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [title, setTitle] = useState("");
-  const [type, setType] = useState("video");
-  const [content, setContent] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [pdfUrl, setPdfUrl] = useState("");
-  const [audioUrl, setAudioUrl] = useState("");
-  const [scriptText, setScriptText] = useState("");
-  const [aiContext, setAiContext] = useState("");
-  const [summary, setSummary] = useState("");
-  const [duration, setDuration] = useState(0);
-  const [isPreview, setIsPreview] = useState(false);
+  const [title, setTitle] = useState(lesson?.title ?? "");
+  const [type, setType] = useState(lesson?.type ?? "video");
+  const [content, setContent] = useState(lesson?.content ?? "");
+  const [videoUrl, setVideoUrl] = useState(lesson?.video_url ?? "");
+  const [pdfUrl, setPdfUrl] = useState(lesson?.pdf_url ?? "");
+  const [audioUrl, setAudioUrl] = useState(lesson?.audio_url ?? "");
+  const [scriptText, setScriptText] = useState(lesson?.script_text ?? "");
+  const [aiContext, setAiContext] = useState(lesson?.ai_context ?? "");
+  const [summary, setSummary] = useState(lesson?.summary ?? "");
+  const [duration, setDuration] = useState(lesson?.duration_minutes ?? 0);
+  const [isPreview, setIsPreview] = useState(lesson?.is_preview ?? false);
   const [saving, setSaving] = useState(false);
 
   async function handleUpload(field: "video" | "pdf" | "audio", file: File) {
-    const id = toast.loading("جارٍ الرفع...");
+    const id = toast.loading("جارٍ الرفع... 0%");
     try {
-      const url = await uploadMedia(file, field);
+      const url = await uploadMedia(file, field, (pct) =>
+        toast.loading(`جارٍ الرفع... ${pct}%`, { id }),
+      );
       if (field === "video") setVideoUrl(url);
       if (field === "pdf") setPdfUrl(url);
       if (field === "audio") setAudioUrl(url);
@@ -241,15 +305,7 @@ function LessonForm({
 
   async function handleSave() {
     setSaving(true);
-    const { data: existing } = await supabase
-      .from("lessons")
-      .select("position")
-      .eq("course_id", courseId)
-      .order("position", { ascending: false })
-      .limit(1);
-    const nextPos = (existing?.[0]?.position ?? -1) + 1;
-    const { error } = await supabase.from("lessons").insert({
-      course_id: courseId,
+    const payload = {
       title,
       type: type as "video" | "text" | "pdf" | "link" | "quiz",
       content: content || null,
@@ -260,23 +316,41 @@ function LessonForm({
       ai_context: aiContext || null,
       summary: summary || null,
       duration_minutes: duration,
-      position: nextPos,
       is_preview: isPreview,
-    });
+    };
+
+    let error;
+    if (lesson) {
+      ({ error } = await supabase.from("lessons").update(payload).eq("id", lesson.id));
+    } else {
+      const { data: existing } = await supabase
+        .from("lessons")
+        .select("position")
+        .eq("course_id", courseId)
+        .order("position", { ascending: false })
+        .limit(1);
+      const nextPos = (existing?.[0]?.position ?? -1) + 1;
+      ({ error } = await supabase
+        .from("lessons")
+        .insert({ ...payload, course_id: courseId, position: nextPos }));
+    }
     setSaving(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("تم إضافة الدرس");
+    toast.success(lesson ? "تم تحديث الدرس" : "تم إضافة الدرس");
     onSaved();
   }
+
 
   return (
     <Card className="mb-4 border-border">
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-sm">
-          درس جديد <X className="h-4 w-4 cursor-pointer" onClick={onClose} />
+          {lesson ? "تعديل الدرس" : "درس جديد"}{" "}
+          <X className="h-4 w-4 cursor-pointer" onClick={onClose} />
+
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -427,7 +501,7 @@ function LessonForm({
           disabled={saving || !title.trim()}
           className="w-full gold-gradient text-gold-foreground"
         >
-          {saving ? "جارٍ الحفظ..." : "إضافة الدرس"}
+          {saving ? "جارٍ الحفظ..." : lesson ? "حفظ التعديلات" : "إضافة الدرس"}
         </Button>
       </CardContent>
     </Card>
