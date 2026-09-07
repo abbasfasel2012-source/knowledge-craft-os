@@ -456,7 +456,7 @@ function LessonForm({
           disabled={saving || !title.trim()}
           className="w-full gold-gradient text-gold-foreground"
         >
-          {saving ? "جارٍ الحفظ..." : "إضافة الدرس"}
+          {saving ? "جارٍ الحفظ..." : lesson ? "حفظ التعديلات" : "إضافة الدرس"}
         </Button>
       </CardContent>
     </Card>
