@@ -74,6 +74,7 @@ function CourseDetail() {
   const [videoMuted, setVideoMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [videoQuality, setVideoQuality] = useState("auto");
+  const [videoAspectRatio, setVideoAspectRatio] = useState("16 / 9");
 
   const { data: course, isLoading: courseLoading, isError: courseError } = useQuery({
     queryKey: ["course", slug],
@@ -264,6 +265,7 @@ function CourseDetail() {
     setVideoPlaying(false);
     setVideoTime(0);
     setVideoDuration(0);
+    setVideoAspectRatio("16 / 9");
     videoRetryRef.current = 0;
   }, [current?.id, currentVideoSrc]);
 
@@ -507,7 +509,11 @@ function CourseDetail() {
     <div className="space-y-6 px-4 py-6">
       {/* المشغّل */}
       {current?.video_url && !videoError && (videoSrcOverride || currentVideoSrc) ? (
-        <div ref={playerRef} className="group relative aspect-video overflow-hidden rounded-2xl bg-black">
+        <div
+          ref={playerRef}
+          className="group relative mx-auto w-full max-w-5xl overflow-hidden rounded-2xl bg-black"
+          style={{ aspectRatio: videoAspectRatio, maxHeight: "78vh" }}
+        >
           <video
             ref={videoRef}
             key={`${current.id}-${videoSrcOverride ?? currentVideoSrc ?? current.video_url}`}
@@ -520,7 +526,13 @@ function CourseDetail() {
             onPlay={() => setVideoPlaying(true)}
             onClick={toggleVideoPlayback}
             onLoadedData={() => setVideoError(false)}
-            onLoadedMetadata={(event) => setVideoDuration(event.currentTarget.duration)}
+            onLoadedMetadata={(event) => {
+              const video = event.currentTarget;
+              setVideoDuration(video.duration);
+              if (video.videoWidth > 0 && video.videoHeight > 0) {
+                setVideoAspectRatio(`${video.videoWidth} / ${video.videoHeight}`);
+              }
+            }}
             onTimeUpdate={(event) => setVideoTime(event.currentTarget.currentTime)}
             onVolumeChange={(event) => setVideoMuted(event.currentTarget.muted)}
             onPause={() => {
