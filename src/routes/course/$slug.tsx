@@ -33,7 +33,6 @@ import { LessonAiAssistant } from "@/components/LessonAiAssistant";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { DEMO_COURSES } from "@/lib/demo-data";
 import {
   downloadFile,
   enroll,
@@ -76,23 +75,17 @@ function CourseDetail() {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [videoQuality, setVideoQuality] = useState("auto");
 
-  const demoCourse = DEMO_COURSES.find((c) => c.slug === slug);
-
-  const { data: course, isLoading: courseLoading } = useQuery({
+  const { data: course, isLoading: courseLoading, isError: courseError } = useQuery({
     queryKey: ["course", slug],
+    enabled: isSupabaseConfigured,
     queryFn: async () => {
-      if (!isSupabaseConfigured) return demoCourse ?? null;
-      try {
-        const { data, error } = await supabase
-          .from("courses")
-          .select("*")
-          .eq("slug", slug)
-          .maybeSingle();
-        if (error || !data) return demoCourse ?? null;
-        return data;
-      } catch {
-        return demoCourse ?? null;
-      }
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (error) throw error;
+      return data ?? null;
     },
   });
 
@@ -102,61 +95,13 @@ function CourseDetail() {
     enabled: !!courseId,
     queryKey: ["lessons", courseId],
     queryFn: async () => {
-      if (!isSupabaseConfigured || demoCourse?.id === courseId) {
-        return (demoCourse?.lessons ?? []) as unknown as {
-          id: string;
-          course_id: string;
-          title: string;
-          summary: string | null;
-          duration_minutes: number | null;
-          position: number;
-          type: string;
-          video_url?: string | null;
-          audio_url?: string | null;
-          pdf_url?: string | null;
-          attachment_url?: string | null;
-          is_preview?: boolean | null;
-        }[];
-      }
-      try {
-        const { data, error } = await supabase
-          .from("lessons")
-          .select("*")
-          .eq("course_id", courseId!)
-          .order("position");
-        if (error || !data?.length) {
-          return (demoCourse?.lessons ?? []) as unknown as {
-            id: string;
-            course_id: string;
-            title: string;
-            summary: string | null;
-            duration_minutes: number | null;
-            position: number;
-            type: string;
-            video_url?: string | null;
-            audio_url?: string | null;
-            pdf_url?: string | null;
-            attachment_url?: string | null;
-            is_preview?: boolean | null;
-          }[];
-        }
-        return data;
-      } catch {
-        return (demoCourse?.lessons ?? []) as unknown as {
-          id: string;
-          course_id: string;
-          title: string;
-          summary: string | null;
-          duration_minutes: number | null;
-          position: number;
-          type: string;
-          video_url?: string | null;
-          audio_url?: string | null;
-          pdf_url?: string | null;
-          attachment_url?: string | null;
-          is_preview?: boolean | null;
-        }[];
-      }
+      const { data, error } = await supabase
+        .from("lessons")
+        .select("*")
+        .eq("course_id", courseId!)
+        .order("position");
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
@@ -238,44 +183,14 @@ function CourseDetail() {
     enabled: !!courseId,
     queryKey: ["course-quizzes", courseId],
     queryFn: async () => {
-      if (!isSupabaseConfigured || demoCourse?.id === courseId) {
-        return (demoCourse?.quizzes ?? []) as unknown as {
-          id: string;
-          title: string;
-          description: string | null;
-          pass_score: number;
-          time_limit_minutes: number | null;
-          max_attempts: number | null;
-        }[];
-      }
-      try {
-        const { data } = await supabase
-          .from("quizzes")
-          .select("id,title,description,pass_score,time_limit_minutes,max_attempts")
-          .eq("course_id", courseId!)
-          .eq("is_active", true)
-          .order("created_at");
-        if (!data?.length) {
-          return (demoCourse?.quizzes ?? []) as unknown as {
-            id: string;
-            title: string;
-            description: string | null;
-            pass_score: number;
-            time_limit_minutes: number | null;
-            max_attempts: number | null;
-          }[];
-        }
-        return data;
-      } catch {
-        return (demoCourse?.quizzes ?? []) as unknown as {
-          id: string;
-          title: string;
-          description: string | null;
-          pass_score: number;
-          time_limit_minutes: number | null;
-          max_attempts: number | null;
-        }[];
-      }
+      const { data, error } = await supabase
+        .from("quizzes")
+        .select("id,title,description,pass_score,time_limit_minutes,max_attempts")
+        .eq("course_id", courseId!)
+        .eq("is_active", true)
+        .order("created_at");
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
@@ -308,16 +223,7 @@ function CourseDetail() {
           likes: 0,
         }));
       } catch {
-        return [
-          {
-            id: "c-demo-1",
-            author: "أحمد المنصوري",
-            avatar: undefined,
-            content: "دورة ممتازة وشرح وافي ومبسط، شكراً جزيلاً!",
-            timestamp: "اليوم",
-            likes: 4,
-          },
-        ];
+        return [];
       }
     },
   });
@@ -547,12 +453,39 @@ function CourseDetail() {
     }
   };
 
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4 text-center">
+        <div>
+          <h2 className="text-xl font-bold">تعذّر الاتصال بقاعدة البيانات</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            متغيرات Supabase غير مضبوطة. أضف VITE_SUPABASE_URL و VITE_SUPABASE_PUBLISHABLE_KEY
+            في إعدادات Lovable ثم أعد النشر.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (courseLoading) {
     return (
       <div className="space-y-4 px-4 py-6">
         <Skeleton className="h-40 rounded-2xl" />
         <Skeleton className="h-8 rounded-lg" />
         <Skeleton className="h-12 rounded-lg" />
+      </div>
+    );
+  }
+
+  if (courseError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4 text-center">
+        <div>
+          <h2 className="text-xl font-bold">تعذّر الاتصال بقاعدة البيانات</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            تحقق من أن الجداول موجودة في Supabase وأن الهجرات نُفّذت بالكامل.
+          </p>
+        </div>
       </div>
     );
   }
