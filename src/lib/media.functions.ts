@@ -24,6 +24,7 @@ function toPath(url?: string | null): string | null {
 export const getPreviewMediaUrl = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => schema.parse(d))
   .handler(async ({ data }) => {
+    if (!UUID_RE.test(data.lessonId)) return { url: null };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: lesson } = await supabaseAdmin
       .from("lessons")
