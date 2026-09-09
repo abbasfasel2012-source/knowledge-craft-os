@@ -41,11 +41,12 @@ function QuizPage() {
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
-      const { data: questions } = await supabase
-        .from("questions")
+      const { data: questions, error: questionsError } = await supabase
+        .from("quiz_questions_view")
         .select("id,type,prompt,options,points,position")
         .eq("quiz_id", id)
         .order("position");
+      if (questionsError) throw questionsError;
       return { quiz, questions: questions ?? [] };
     },
   });
