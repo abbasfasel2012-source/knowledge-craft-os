@@ -289,6 +289,9 @@ function LessonForm({
   const [duration, setDuration] = useState(lesson?.duration_minutes ?? 0);
   const [isPreview, setIsPreview] = useState(lesson?.is_preview ?? false);
   const [saving, setSaving] = useState(false);
+  const { user } = useSession();
+  const canUpload = user?.role === "owner" || user?.role === "instructor";
+
 
   async function handleUpload(field: "video" | "pdf" | "audio", file: File) {
     if (!canUpload) {
