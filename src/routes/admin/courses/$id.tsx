@@ -38,8 +38,8 @@ export const Route = createFileRoute("/admin/courses/$id")({
 
 function EditCourse() {
   const { id } = Route.useParams();
-  const { user } = useSession();
-  const canUpload = user?.role === "owner";
+
+
 
   const queryClient = useQueryClient();
   const [showLessonForm, setShowLessonForm] = useState(false);
