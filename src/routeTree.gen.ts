@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as RecordRouteImport } from './routes/record'
 import { Route as RecordsRouteImport } from './routes/records'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminQuizzesRouteImport } from './routes/admin/quizzes'
@@ -22,6 +24,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as CertificatesCodeRouteImport } from './routes/certificates/$code'
 import { Route as CourseSlugRouteImport } from './routes/course/$slug'
 import { Route as QuizIdRouteImport } from './routes/quiz/$id'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AdminCoursesIndexRouteImport } from './routes/admin/courses/index'
 import { Route as AdminCoursesIdRouteImport } from './routes/admin/courses/$id'
 
@@ -33,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -50,6 +58,12 @@ const RecordsRoute = RecordsRouteImport.update({
   path: '/records',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -90,6 +104,11 @@ const QuizIdRoute = QuizIdRouteImport.update({
   path: '/quiz/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCoursesIndexRoute = AdminCoursesIndexRouteImport.update({
   id: '/admin/courses/',
   path: '/admin/courses/',
@@ -104,9 +123,11 @@ const AdminCoursesIdRoute = AdminCoursesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
   '/records': typeof RecordsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -115,15 +136,18 @@ export interface FileRoutesByFullPath {
   '/course/$slug': typeof CourseSlugRoute
   '/quiz/$id': typeof QuizIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
   '/admin/courses/': typeof AdminCoursesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
   '/records': typeof RecordsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -132,6 +156,7 @@ export interface FileRoutesByTo {
   '/course/$slug': typeof CourseSlugRoute
   '/quiz/$id': typeof QuizIdRoute
   '/admin': typeof AdminIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
   '/admin/courses': typeof AdminCoursesIndexRoute
 }
@@ -139,9 +164,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
   '/records': typeof RecordsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -150,6 +177,7 @@ export interface FileRoutesById {
   '/course/$slug': typeof CourseSlugRoute
   '/quiz/$id': typeof QuizIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
   '/admin/courses/': typeof AdminCoursesIndexRoute
 }
@@ -158,9 +186,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/mcp'
     | '/profile'
     | '/record'
     | '/records'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/analytics'
     | '/admin/quizzes'
     | '/admin/settings'
@@ -169,15 +199,18 @@ export interface FileRouteTypes {
     | '/course/$slug'
     | '/quiz/$id'
     | '/admin/'
+    | '/.lovable/oauth/consent'
     | '/admin/courses/$id'
     | '/admin/courses/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/mcp'
     | '/profile'
     | '/record'
     | '/records'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/analytics'
     | '/admin/quizzes'
     | '/admin/settings'
@@ -186,15 +219,18 @@ export interface FileRouteTypes {
     | '/course/$slug'
     | '/quiz/$id'
     | '/admin'
+    | '/.lovable/oauth/consent'
     | '/admin/courses/$id'
     | '/admin/courses'
   id:
     | '__root__'
     | '/'
     | '/auth'
+    | '/mcp'
     | '/profile'
     | '/record'
     | '/records'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/analytics'
     | '/admin/quizzes'
     | '/admin/settings'
@@ -203,6 +239,7 @@ export interface FileRouteTypes {
     | '/course/$slug'
     | '/quiz/$id'
     | '/admin/'
+    | '/.lovable/oauth/consent'
     | '/admin/courses/$id'
     | '/admin/courses/'
   fileRoutesById: FileRoutesById
@@ -210,9 +247,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  McpRoute: typeof McpRoute
   ProfileRoute: typeof ProfileRoute
   RecordRoute: typeof RecordRoute
   RecordsRoute: typeof RecordsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminQuizzesRoute: typeof AdminQuizzesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
@@ -221,6 +260,7 @@ export interface RootRouteChildren {
   CourseSlugRoute: typeof CourseSlugRoute
   QuizIdRoute: typeof QuizIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   AdminCoursesIdRoute: typeof AdminCoursesIdRoute
   AdminCoursesIndexRoute: typeof AdminCoursesIndexRoute
 }
@@ -239,6 +279,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -260,6 +307,13 @@ declare module '@tanstack/react-router' {
       path: '/records'
       fullPath: '/records'
       preLoaderRoute: typeof RecordsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -318,6 +372,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QuizIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/courses/': {
       id: '/admin/courses/'
       path: '/admin/courses'
@@ -338,9 +399,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  McpRoute: McpRoute,
   ProfileRoute: ProfileRoute,
   RecordRoute: RecordRoute,
   RecordsRoute: RecordsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminQuizzesRoute: AdminQuizzesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
@@ -349,6 +413,7 @@ const rootRouteChildren: RootRouteChildren = {
   CourseSlugRoute: CourseSlugRoute,
   QuizIdRoute: QuizIdRoute,
   AdminIndexRoute: AdminIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   AdminCoursesIdRoute: AdminCoursesIdRoute,
   AdminCoursesIndexRoute: AdminCoursesIndexRoute,
 }
