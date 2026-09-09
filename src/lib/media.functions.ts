@@ -2,9 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const schema = z.object({
-  lessonId: z.string().uuid(),
+  lessonId: z.string(),
   field: z.enum(["video", "audio", "pdf"]).default("video"),
 });
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const PREFIX = "course-media://";
 
