@@ -2,9 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const schema = z.object({
-  lessonId: z.string().uuid(),
+  lessonId: z.string(),
   field: z.enum(["video", "audio", "pdf"]).default("video"),
 });
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const PREFIX = "course-media://";
 
@@ -22,6 +24,7 @@ function toPath(url?: string | null): string | null {
 export const getPreviewMediaUrl = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => schema.parse(d))
   .handler(async ({ data }) => {
+    if (!UUID_RE.test(data.lessonId)) return { url: null };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: lesson } = await supabaseAdmin
       .from("lessons")
