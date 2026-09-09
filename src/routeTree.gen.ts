@@ -22,6 +22,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as CertificatesCodeRouteImport } from './routes/certificates/$code'
 import { Route as CourseSlugRouteImport } from './routes/course/$slug'
 import { Route as QuizIdRouteImport } from './routes/quiz/$id'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AdminCoursesIndexRouteImport } from './routes/admin/courses/index'
 import { Route as AdminCoursesIdRouteImport } from './routes/admin/courses/$id'
 
@@ -90,6 +91,11 @@ const QuizIdRoute = QuizIdRouteImport.update({
   path: '/quiz/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCoursesIndexRoute = AdminCoursesIndexRouteImport.update({
   id: '/admin/courses/',
   path: '/admin/courses/',
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/course/$slug': typeof CourseSlugRoute
   '/quiz/$id': typeof QuizIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
   '/admin/courses/': typeof AdminCoursesIndexRoute
 }
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/course/$slug': typeof CourseSlugRoute
   '/quiz/$id': typeof QuizIdRoute
   '/admin': typeof AdminIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
   '/admin/courses': typeof AdminCoursesIndexRoute
 }
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/course/$slug': typeof CourseSlugRoute
   '/quiz/$id': typeof QuizIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/admin/courses/$id': typeof AdminCoursesIdRoute
   '/admin/courses/': typeof AdminCoursesIndexRoute
 }
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/course/$slug'
     | '/quiz/$id'
     | '/admin/'
+    | '/.lovable/oauth/consent'
     | '/admin/courses/$id'
     | '/admin/courses/'
   fileRoutesByTo: FileRoutesByTo
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/course/$slug'
     | '/quiz/$id'
     | '/admin'
+    | '/.lovable/oauth/consent'
     | '/admin/courses/$id'
     | '/admin/courses'
   id:
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '/course/$slug'
     | '/quiz/$id'
     | '/admin/'
+    | '/.lovable/oauth/consent'
     | '/admin/courses/$id'
     | '/admin/courses/'
   fileRoutesById: FileRoutesById
@@ -221,6 +233,7 @@ export interface RootRouteChildren {
   CourseSlugRoute: typeof CourseSlugRoute
   QuizIdRoute: typeof QuizIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   AdminCoursesIdRoute: typeof AdminCoursesIdRoute
   AdminCoursesIndexRoute: typeof AdminCoursesIndexRoute
 }
@@ -318,6 +331,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QuizIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/courses/': {
       id: '/admin/courses/'
       path: '/admin/courses'
@@ -349,6 +369,7 @@ const rootRouteChildren: RootRouteChildren = {
   CourseSlugRoute: CourseSlugRoute,
   QuizIdRoute: QuizIdRoute,
   AdminIndexRoute: AdminIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   AdminCoursesIdRoute: AdminCoursesIdRoute,
   AdminCoursesIndexRoute: AdminCoursesIndexRoute,
 }
