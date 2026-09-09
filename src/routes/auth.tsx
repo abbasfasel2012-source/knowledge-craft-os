@@ -12,11 +12,20 @@ import logo from "@/assets/logo.png";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "تسجيل الدخول — تدريب" }] }),
+  validateSearch: (s: Record<string, unknown>) => {
+    const next = typeof s["next"] === "string" ? s["next"] : "";
+    return { next: next.startsWith("/") && !next.startsWith("//") ? next : "" };
+  },
   component: AuthPage,
 });
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const goNext = () => {
+    if (next) window.location.href = next;
+    else navigate({ to: "/" });
+  };
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");

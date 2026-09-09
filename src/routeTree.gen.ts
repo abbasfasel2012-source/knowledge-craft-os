@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as RecordRouteImport } from './routes/record'
 import { Route as RecordsRouteImport } from './routes/records'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminQuizzesRouteImport } from './routes/admin/quizzes'
@@ -36,6 +38,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -51,6 +58,12 @@ const RecordsRoute = RecordsRouteImport.update({
   path: '/records',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -110,9 +123,11 @@ const AdminCoursesIdRoute = AdminCoursesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
   '/records': typeof RecordsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -128,9 +143,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
   '/records': typeof RecordsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -147,9 +164,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
   '/records': typeof RecordsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -167,9 +186,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/mcp'
     | '/profile'
     | '/record'
     | '/records'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/analytics'
     | '/admin/quizzes'
     | '/admin/settings'
@@ -185,9 +206,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/mcp'
     | '/profile'
     | '/record'
     | '/records'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/analytics'
     | '/admin/quizzes'
     | '/admin/settings'
@@ -203,9 +226,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/mcp'
     | '/profile'
     | '/record'
     | '/records'
+    | '/.well-known/oauth-protected-resource'
     | '/admin/analytics'
     | '/admin/quizzes'
     | '/admin/settings'
@@ -222,9 +247,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  McpRoute: typeof McpRoute
   ProfileRoute: typeof ProfileRoute
   RecordRoute: typeof RecordRoute
   RecordsRoute: typeof RecordsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminQuizzesRoute: typeof AdminQuizzesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
@@ -254,6 +281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -273,6 +307,13 @@ declare module '@tanstack/react-router' {
       path: '/records'
       fullPath: '/records'
       preLoaderRoute: typeof RecordsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -358,9 +399,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  McpRoute: McpRoute,
   ProfileRoute: ProfileRoute,
   RecordRoute: RecordRoute,
   RecordsRoute: RecordsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminQuizzesRoute: AdminQuizzesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
