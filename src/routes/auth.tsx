@@ -41,7 +41,7 @@ function AuthPage() {
       return;
     }
     toast.success("مرحباً بك!");
-    navigate({ to: "/" });
+    goNext();
   }
 
   async function handleSignUp(e: React.FormEvent) {
@@ -59,7 +59,7 @@ function AuthPage() {
     }
     if (data.user) {
       toast.success("تم إنشاء حسابك بنجاح!");
-      navigate({ to: "/" });
+      goNext();
     }
   }
 
