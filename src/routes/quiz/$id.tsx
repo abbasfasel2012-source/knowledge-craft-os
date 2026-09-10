@@ -23,6 +23,15 @@ export const Route = createFileRoute("/quiz/$id")({
   component: QuizPage,
 });
 
+type Question = {
+  id: string;
+  type: "mcq" | "true_false" | "short" | "essay";
+  prompt: string;
+  options: string[] | null;
+  points: number;
+  position: number;
+};
+
 function QuizPage() {
   const { id } = Route.useParams();
   const { user } = useSession();
@@ -41,11 +50,11 @@ function QuizPage() {
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
-      const { data: questions, error: questionsError } = await supabase
-        .from("quiz_questions_view")
+      const { data: questions, error: questionsError } = (await supabase
+        .from("quiz_questions_view" as any)
         .select("id,type,prompt,options,points,position")
         .eq("quiz_id", id)
-        .order("position");
+        .order("position")) as { data: Question[] | null; error: any };
       if (questionsError) throw questionsError;
       return { quiz, questions: questions ?? [] };
     },

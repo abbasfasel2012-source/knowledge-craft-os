@@ -14,7 +14,8 @@ export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "تسجيل الدخول — تدريب" }] }),
   validateSearch: (s: Record<string, unknown>) => {
     const next = typeof s["next"] === "string" ? s["next"] : "";
-    return { next: next.startsWith("/") && !next.startsWith("//") ? next : "" };
+    const valid = next.startsWith("/") && !next.startsWith("//") ? next : undefined;
+    return valid ? { next: valid } : {};
   },
   component: AuthPage,
 });
@@ -41,7 +42,7 @@ function AuthPage() {
       return;
     }
     toast.success("مرحباً بك!");
-    navigate({ to: "/" });
+    goNext();
   }
 
   async function handleSignUp(e: React.FormEvent) {
@@ -59,7 +60,7 @@ function AuthPage() {
     }
     if (data.user) {
       toast.success("تم إنشاء حسابك بنجاح!");
-      navigate({ to: "/" });
+      goNext();
     }
   }
 
