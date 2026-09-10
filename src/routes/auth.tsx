@@ -14,7 +14,8 @@ export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "تسجيل الدخول — تدريب" }] }),
   validateSearch: (s: Record<string, unknown>) => {
     const next = typeof s["next"] === "string" ? s["next"] : "";
-    return { next: next.startsWith("/") && !next.startsWith("//") ? next : "" };
+    const valid = next.startsWith("/") && !next.startsWith("//") ? next : undefined;
+    return valid ? { next: valid } : {};
   },
   component: AuthPage,
 });
