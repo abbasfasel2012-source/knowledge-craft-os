@@ -15,12 +15,10 @@ const rawKey =
 // The URL and publishable key are safe to expose in a browser bundle. Keeping
 // them as fallbacks prevents SSR from crashing when a host does not inject
 // VITE_* variables at build time (for example, a static preview deployment).
-// Keep a working fallback for static previews. Deployment environments should
-// still provide VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.
-const supabaseUrl = rawUrl || "https://isilobzixxxhdfneqqkh.supabase.co";
-const supabasePublishableKey =
-  rawKey ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzaWxvYnppeHh4aGRmbmVxcWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NDIwNjIsImV4cCI6MjA5MjAxODA2Mn0.hIGCKgY4gszGq66EhU4bmFaLg2a5pi4f-NARSvqu0BI";
+// The publishable key must come from this project's API settings. Never reuse
+// a key from another Supabase project; deployment environments should provide it.
+const supabaseUrl = rawUrl || "https://qjvcmjqjgnylgboqlufh.supabase.co";
+const supabasePublishableKey = rawKey || "";
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
