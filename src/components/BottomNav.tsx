@@ -1,11 +1,13 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { History, Home, User } from "lucide-react";
+import { History, Home, LogOut, User } from "lucide-react";
 import { useI18n } from "@/lib/i18n-context";
+import { useSession } from "@/lib/session";
 
 export function BottomNav() {
   const location = useLocation();
   const path = location.pathname;
   const { t } = useI18n();
+  const { user, logout } = useSession();
 
   const sideItem =
     "flex flex-1 flex-col items-center gap-1 py-3 text-[11px] font-semibold transition-all duration-200 active:scale-90";
@@ -45,6 +47,21 @@ export function BottomNav() {
           <User className="h-5 w-5" />
           <span>{t("nav_profile")}</span>
         </Link>
+
+        {user && (
+          <button
+            type="button"
+            onClick={async () => {
+              await logout();
+              window.location.href = "/auth";
+            }}
+            className={`${sideItem} text-muted-foreground hover:text-destructive`}
+            aria-label={t("logout")}
+          >
+            <LogOut className="h-5 w-5" />
+            <span>{t("logout")}</span>
+          </button>
+        )}
       </div>
     </nav>
   );
