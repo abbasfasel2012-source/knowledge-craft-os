@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,37 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const handleSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!mounted || !data.session) return;
+      if (window.location.hash.includes("type=recovery")) {
+        setRecoveryMode(true);
+      } else {
+        goNext();
+      }
+    };
+    void handleSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, authSession) => {
+      if (!mounted || !authSession) return;
+      if (event === "PASSWORD_RECOVERY") {
+        setRecoveryMode(true);
+      } else if (event === "SIGNED_IN") {
+        goNext();
+      }
+    });
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [next]);
 
   async function handleGoogleSignIn() {
     setLoading(true);
@@ -157,6 +187,26 @@ function AuthPage() {
     toast.success("تم إرسال رابط إعادة تعيين كلمة المرور.");
   }
 
+  async function updatePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (password.length < 6) {
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل.");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("تم تغيير كلمة المرور بنجاح.");
+    setRecoveryMode(false);
+    setPassword("");
+    await supabase.auth.signOut();
+    navigate({ to: "/auth" });
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
       <div className="mb-8 flex flex-col items-center gap-3">
@@ -172,147 +222,174 @@ function AuthPage() {
           <CardTitle className="text-center text-lg">تسجيل الدخول</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="mb-4 grid w-full grid-cols-2">
-              <TabsTrigger value="signin">دخول</TabsTrigger>
-              <TabsTrigger value="signup">حساب جديد</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signin">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={loading}
-                onClick={handleGoogleSignIn}
-                className="mb-4 w-full gap-2"
-              >
-                <span className="flex h-5 w-5 items-center justify-center rounded-full border text-xs font-bold">
-                  G
-                </span>
-                {loading ? "جارٍ التحويل..." : "المتابعة باستخدام Google"}
-              </Button>
-              <div className="mb-4 flex items-center gap-3 text-xs text-muted-foreground">
-                <div className="h-px flex-1 bg-border" />
-                <span>أو باستخدام البريد الإلكتروني</span>
-                <div className="h-px flex-1 bg-border" />
+          {recoveryMode ? (
+            <form onSubmit={updatePassword} className="space-y-4">
+              <p className="text-center text-sm text-muted-foreground">
+                أدخل كلمة المرور الجديدة لحسابك.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="new-password">كلمة المرور الجديدة</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="6 أحرف على الأقل"
+                />
               </div>
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">البريد الإلكتروني</Label>
-                  <div className="relative">
-                    <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="signin-email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="pr-10"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">كلمة المرور</Label>
-                  <div className="relative">
-                    <Lock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="pr-10"
-                    />
-                  </div>
-                </div>
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full gold-gradient text-gold-foreground"
-                >
-                  {loading ? "جارٍ الدخول..." : "دخول"}
-                </Button>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <button
-                    type="button"
-                    onClick={resendConfirmation}
-                    disabled={loading}
-                    className="hover:text-foreground hover:underline"
-                  >
-                    إعادة إرسال التأكيد
-                  </button>
-                  <button
-                    type="button"
-                    onClick={resetPassword}
-                    disabled={loading}
-                    className="hover:text-foreground hover:underline"
-                  >
-                    نسيت كلمة المرور؟
-                  </button>
-                </div>
-              </form>
-            </TabsContent>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full gold-gradient text-gold-foreground"
+              >
+                {loading ? "جارٍ الحفظ..." : "حفظ كلمة المرور"}
+              </Button>
+            </form>
+          ) : (
+            <Tabs defaultValue="signin" className="w-full">
+              <TabsList className="mb-4 grid w-full grid-cols-2">
+                <TabsTrigger value="signin">دخول</TabsTrigger>
+                <TabsTrigger value="signup">حساب جديد</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">الاسم الكامل</Label>
-                  <div className="relative">
-                    <User className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      required
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="اسمك الكامل"
-                      className="pr-10"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">البريد الإلكتروني</Label>
-                  <div className="relative">
-                    <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="pr-10"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">كلمة المرور</Label>
-                  <div className="relative">
-                    <Lock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      required
-                      minLength={6}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="6 أحرف على الأقل"
-                      className="pr-10"
-                    />
-                  </div>
-                </div>
+              <TabsContent value="signin">
                 <Button
-                  type="submit"
+                  type="button"
+                  variant="outline"
                   disabled={loading}
-                  className="w-full gold-gradient text-gold-foreground"
+                  onClick={handleGoogleSignIn}
+                  className="mb-4 w-full gap-2"
                 >
-                  {loading ? "جارٍ الإنشاء..." : "إنشاء حساب"}
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full border text-xs font-bold">
+                    G
+                  </span>
+                  {loading ? "جارٍ التحويل..." : "المتابعة باستخدام Google"}
                 </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+                <div className="mb-4 flex items-center gap-3 text-xs text-muted-foreground">
+                  <div className="h-px flex-1 bg-border" />
+                  <span>أو باستخدام البريد الإلكتروني</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-email">البريد الإلكتروني</Label>
+                    <div className="relative">
+                      <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="signin-email"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="pr-10"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-password">كلمة المرور</Label>
+                    <div className="relative">
+                      <Lock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="signin-password"
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="pr-10"
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full gold-gradient text-gold-foreground"
+                  >
+                    {loading ? "جارٍ الدخول..." : "دخول"}
+                  </Button>
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <button
+                      type="button"
+                      onClick={resendConfirmation}
+                      disabled={loading}
+                      className="hover:text-foreground hover:underline"
+                    >
+                      إعادة إرسال التأكيد
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetPassword}
+                      disabled={loading}
+                      className="hover:text-foreground hover:underline"
+                    >
+                      نسيت كلمة المرور؟
+                    </button>
+                  </div>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="signup">
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-name">الاسم الكامل</Label>
+                    <div className="relative">
+                      <User className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="signup-name"
+                        type="text"
+                        required
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="اسمك الكامل"
+                        className="pr-10"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">البريد الإلكتروني</Label>
+                    <div className="relative">
+                      <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="pr-10"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">كلمة المرور</Label>
+                    <div className="relative">
+                      <Lock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        required
+                        minLength={6}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="6 أحرف على الأقل"
+                        className="pr-10"
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full gold-gradient text-gold-foreground"
+                  >
+                    {loading ? "جارٍ الإنشاء..." : "إنشاء حساب"}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          )}
         </CardContent>
       </Card>
 
