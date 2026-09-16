@@ -17,10 +17,10 @@ const rawKey =
 // VITE_* variables at build time (for example, a static preview deployment).
 // These public values belong to the production project used by this app.
 // Service-role credentials must remain server-only.
-const supabaseUrl = rawUrl || "https://isilobzixxxhdfneqqkh.supabase.co";
+const supabaseUrl = rawUrl || "https://qjvcmjqjgnylgboqlufh.supabase.co";
 const supabasePublishableKey =
   rawKey ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzaWxvYnppeHh4aGRmbmVxcWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NDIwNjIsImV4cCI6MjA5MjAxODA2Mn0.hIGCKgY4gszGq66EhU4bmFaLg2a5pi4f-NARSvqu0BI";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdmNt anFqZ255bGdib3FsdWZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0OTQwMDAsImV4cCI6MjEwMzA3MDAwMH0.EZ-rq8xvGGP7euaOgQT54xEmOUdX3zzVamCnm9e8h2k".replace(" ", "");
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
