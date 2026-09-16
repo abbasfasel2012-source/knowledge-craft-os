@@ -10,6 +10,20 @@ import { toast } from "sonner";
 import { GraduationCap, Mail, Lock, User } from "lucide-react";
 import logo from "@/assets/logo.png";
 
+const PRODUCTION_ORIGIN = "https://sinjar.lovable.app";
+
+function getAuthRedirect(next?: string) {
+  // OAuth providers must be given a stable, allow-listed URL. Using the
+  // current preview origin here causes redirect_uri_mismatch after publish.
+  const origin =
+    typeof window !== "undefined" && window.location.hostname === "sinjar.lovable.app"
+      ? PRODUCTION_ORIGIN
+      : typeof window !== "undefined"
+        ? window.location.origin
+        : PRODUCTION_ORIGIN;
+  return `${origin}/auth${next ? `?next=${encodeURIComponent(next)}` : ""}`;
+}
+
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "تسجيل الدخول — تدريب" }] }),
   validateSearch: (s: Record<string, unknown>) => {
@@ -34,7 +48,7 @@ function AuthPage() {
 
   async function handleGoogleSignIn() {
     setLoading(true);
-    const redirectTo = `${window.location.origin}/auth${next ? `?next=${encodeURIComponent(next)}` : ""}`;
+    const redirectTo = getAuthRedirect(next);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo },
@@ -44,6 +58,12 @@ function AuthPage() {
       const message = error.message.toLowerCase();
       if (message.includes("provider is not enabled")) {
         toast.error("تسجيل الدخول بواسطة Google غير مفعّل في إعدادات المنصة بعد.");
+        return;
+      }
+      if (message.includes("redirect_uri_mismatch") || message.includes("redirect uri")) {
+        toast.error(
+          "إعداد Google OAuth يحتاج إضافة عنوان callback الخاص بـ Supabase من لوحة الإعدادات.",
+        );
         return;
       }
       toast.error(error.message);
