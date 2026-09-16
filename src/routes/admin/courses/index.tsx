@@ -75,6 +75,7 @@ function AdminCourses() {
           categories={categories ?? []}
           userId={user?.id ?? ""}
           canUpload={canUpload}
+          onCategoryCreated={() => queryClient.invalidateQueries({ queryKey: ["categories"] })}
           onClose={() => setCreating(false)}
           onSaved={() => {
             setCreating(false);
@@ -140,12 +141,14 @@ function CourseForm({
   categories,
   userId,
   canUpload,
+  onCategoryCreated,
   onClose,
   onSaved,
 }: {
   categories: { id: string; name: string; slug: string }[];
   userId: string;
   canUpload: boolean;
+  onCategoryCreated: () => void;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -159,6 +162,26 @@ function CourseForm({
   const [status, setStatus] = useState("draft");
   const [coverUrl, setCoverUrl] = useState("");
   const [saving, setSaving] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
+
+  async function handleCreateCategory() {
+    const name = newCategory.trim();
+    if (!name) return;
+    const slug = `${name.toLowerCase().replace(/[^a-z0-9\u0600-\u06ff]+/g, "-")}-${Date.now().toString(36)}`;
+    const { data, error } = await supabase
+      .from("categories")
+      .insert({ name, slug })
+      .select("id,name,slug")
+      .single();
+    if (error || !data) {
+      toast.error(error?.message ?? "تعذر إضافة التصنيف");
+      return;
+    }
+    onCategoryCreated();
+    setCategoryId(data.id);
+    setNewCategory("");
+    toast.success("تمت إضافة التصنيف");
+  }
 
   async function handleUploadCover(file: File) {
     try {
@@ -242,6 +265,21 @@ function CourseForm({
                 ))}
               </SelectContent>
             </Select>
+            <div className="mt-2 flex gap-2">
+              <Input
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                placeholder="تصنيف جديد"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCreateCategory}
+                disabled={!newCategory.trim()}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label>المستوى</Label>
