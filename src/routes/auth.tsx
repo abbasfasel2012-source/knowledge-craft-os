@@ -35,9 +35,16 @@ function AuthPage() {
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
     setLoading(false);
     if (error) {
+      if (error.message.toLowerCase().includes("email not confirmed")) {
+        toast.error("يجب تأكيد بريدك الإلكتروني أولاً من الرسالة المرسلة إليك.");
+        return;
+      }
       toast.error(error.message);
       return;
     }
@@ -49,18 +56,29 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: email.trim().toLowerCase(),
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: { full_name: fullName.trim() },
+        emailRedirectTo: `${window.location.origin}/auth`,
+      },
     });
     setLoading(false);
     if (error) {
+      if (error.message.toLowerCase().includes("already registered")) {
+        toast.error("هذا البريد مسجل مسبقاً. استخدم تبويب دخول.");
+        return;
+      }
       toast.error(error.message);
       return;
     }
     if (data.user) {
-      toast.success("تم إنشاء حسابك بنجاح!");
-      goNext();
+      if (data.session) {
+        toast.success("تم إنشاء حسابك وتسجيل دخولك بنجاح!");
+        goNext();
+      } else {
+        toast.success("تم إنشاء الحساب. تحقق من بريدك الإلكتروني ثم سجّل الدخول.");
+      }
     }
   }
 
