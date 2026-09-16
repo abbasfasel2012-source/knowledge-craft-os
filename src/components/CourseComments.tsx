@@ -17,12 +17,14 @@ interface CourseCommentsProps {
   courseId: string;
   comments?: Comment[];
   onComment?: (content: string) => void;
+  onLike?: (commentId: string) => Promise<boolean>;
 }
 
 export function CourseComments({
   courseId: _courseId,
   comments = [],
   onComment,
+  onLike,
 }: CourseCommentsProps) {
   const { user } = useSession();
   const [newComment, setNewComment] = useState("");
@@ -44,9 +46,10 @@ export function CourseComments({
     }
   };
 
-  const toggleLike = (commentId: string) => {
+  const toggleLike = async (commentId: string) => {
+    const persisted = onLike ? await onLike(commentId) : !likedComments.has(commentId);
     const newLiked = new Set(likedComments);
-    if (newLiked.has(commentId)) {
+    if (!persisted) {
       newLiked.delete(commentId);
     } else {
       newLiked.add(commentId);
@@ -111,7 +114,7 @@ export function CourseComments({
               </div>
             </div>
             <button
-              onClick={() => toggleLike(comment.id)}
+              onClick={() => void toggleLike(comment.id)}
               className={`flex items-center gap-1 text-xs font-semibold transition-colors ${
                 likedComments.has(comment.id)
                   ? "text-gold"

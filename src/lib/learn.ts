@@ -38,25 +38,23 @@ export async function toggleSaved(params: {
   lessonId?: string | null;
 }) {
   const { userId, courseId = null, lessonId = null } = params;
-  if (!isSupabaseConfigured) return true;
-  try {
-    let query = supabase.from("saved_items").select("id").eq("user_id", userId);
-    query = lessonId
-      ? query.eq("lesson_id", lessonId)
-      : query.eq("course_id", courseId!).is("lesson_id", null);
-    const { data: existing } = await query.maybeSingle();
-
-    if (existing) {
-      await supabase.from("saved_items").delete().eq("id", existing.id);
-      return false;
-    }
-    await supabase
-      .from("saved_items")
-      .insert({ user_id: userId, course_id: courseId, lesson_id: lessonId });
-    return true;
-  } catch {
-    return true;
+  if (!isSupabaseConfigured) throw new Error("قاعدة البيانات غير مهيأة");
+  let query = supabase.from("saved_items").select("id").eq("user_id", userId);
+  query = lessonId
+    ? query.eq("lesson_id", lessonId)
+    : query.eq("course_id", courseId!).is("lesson_id", null);
+  const { data: existing, error: readError } = await query.maybeSingle();
+  if (readError) throw readError;
+  if (existing) {
+    const { error } = await supabase.from("saved_items").delete().eq("id", existing.id);
+    if (error) throw error;
+    return false;
   }
+  const { error } = await supabase
+    .from("saved_items")
+    .insert({ user_id: userId, course_id: courseId, lesson_id: lessonId });
+  if (error) throw error;
+  return true;
 }
 
 /** تفاعل (إعجاب) مع دورة أو درس. */
@@ -67,25 +65,23 @@ export async function toggleReaction(params: {
   kind?: string;
 }) {
   const { userId, courseId = null, lessonId = null, kind = "like" } = params;
-  if (!isSupabaseConfigured) return true;
-  try {
-    let query = supabase.from("reactions").select("id").eq("user_id", userId).eq("kind", kind);
-    query = lessonId
-      ? query.eq("lesson_id", lessonId)
-      : query.eq("course_id", courseId!).is("lesson_id", null);
-    const { data: existing } = await query.maybeSingle();
-
-    if (existing) {
-      await supabase.from("reactions").delete().eq("id", existing.id);
-      return false;
-    }
-    await supabase
-      .from("reactions")
-      .insert({ user_id: userId, course_id: courseId, lesson_id: lessonId, kind });
-    return true;
-  } catch {
-    return true;
+  if (!isSupabaseConfigured) throw new Error("قاعدة البيانات غير مهيأة");
+  let query = supabase.from("reactions").select("id").eq("user_id", userId).eq("kind", kind);
+  query = lessonId
+    ? query.eq("lesson_id", lessonId)
+    : query.eq("course_id", courseId!).is("lesson_id", null);
+  const { data: existing, error: readError } = await query.maybeSingle();
+  if (readError) throw readError;
+  if (existing) {
+    const { error } = await supabase.from("reactions").delete().eq("id", existing.id);
+    if (error) throw error;
+    return false;
   }
+  const { error } = await supabase
+    .from("reactions")
+    .insert({ user_id: userId, course_id: courseId, lesson_id: lessonId, kind });
+  if (error) throw error;
+  return true;
 }
 
 /** حفظ موضع المشاهدة وحالة الإكمال للدرس. */

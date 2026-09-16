@@ -76,7 +76,11 @@ function CourseDetail() {
   const [videoQuality, setVideoQuality] = useState("auto");
   const [videoAspectRatio, setVideoAspectRatio] = useState("16 / 9");
 
-  const { data: course, isLoading: courseLoading, isError: courseError } = useQuery({
+  const {
+    data: course,
+    isLoading: courseLoading,
+    isError: courseError,
+  } = useQuery({
     queryKey: ["course", slug],
     enabled: isSupabaseConfigured,
     queryFn: async () => {
@@ -207,6 +211,17 @@ function CourseDetail() {
           .order("created_at", { ascending: false });
         if (error) throw error;
         const ids = [...new Set((data || []).map((r) => r.user_id))];
+        const postIds = (data || []).map((r) => r.id);
+        const { data: likes } = postIds.length
+          ? await (supabase as any)
+              .from("qna_likes")
+              .select("qna_post_id")
+              .in("qna_post_id", postIds)
+          : { data: [] };
+        const likeCounts = new Map<string, number>();
+        (likes || []).forEach((like: { qna_post_id: string }) => {
+          likeCounts.set(like.qna_post_id, (likeCounts.get(like.qna_post_id) || 0) + 1);
+        });
         const authors = new Map<string, { full_name: string | null; avatar_url: string | null }>();
         if (ids.length) {
           const { data: profs } = await supabase
@@ -221,7 +236,7 @@ function CourseDetail() {
           avatar: authors.get(row.user_id)?.avatar_url ?? undefined,
           content: row.body,
           timestamp: new Date(row.created_at).toLocaleDateString("ar"),
-          likes: 0,
+          likes: likeCounts.get(row.id) || 0,
         }));
       } catch {
         return [];
@@ -286,7 +301,6 @@ function CourseDetail() {
       active = false;
     };
   }, [user, current?.id, current?.is_preview, current?.video_url, currentVideoSrc]);
-
 
   useEffect(() => {
     // استئناف من آخر موضع مشاهدة محفوظ
@@ -446,6 +460,30 @@ function CourseDetail() {
     refetchComments();
   };
 
+  const handleLikeComment = async (commentId: string) => {
+    if (requireLogin()) return false;
+    const db = supabase as any;
+    const { data: existing, error: readError } = await db
+      .from("qna_likes")
+      .select("id")
+      .eq("qna_post_id", commentId)
+      .eq("user_id", user!.id)
+      .maybeSingle();
+    if (readError) throw readError;
+    if (existing) {
+      const { error } = await db.from("qna_likes").delete().eq("id", existing.id);
+      if (error) throw error;
+      await refetchComments();
+      return false;
+    }
+    const { error } = await db
+      .from("qna_likes")
+      .insert({ qna_post_id: commentId, user_id: user!.id });
+    if (error) throw error;
+    await refetchComments();
+    return true;
+  };
+
   const handleDownload = async (url: string, title: string) => {
     try {
       await downloadFile(url, title);
@@ -461,8 +499,8 @@ function CourseDetail() {
         <div>
           <h2 className="text-xl font-bold">تعذّر الاتصال بقاعدة البيانات</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            متغيرات Supabase غير مضبوطة. أضف VITE_SUPABASE_URL و VITE_SUPABASE_PUBLISHABLE_KEY
-            في إعدادات Lovable ثم أعد النشر.
+            متغيرات Supabase غير مضبوطة. أضف VITE_SUPABASE_URL و VITE_SUPABASE_PUBLISHABLE_KEY في
+            إعدادات Lovable ثم أعد النشر.
           </p>
         </div>
       </div>
@@ -569,40 +607,89 @@ function CourseDetail() {
               className="pointer-events-auto mb-2 h-1.5 w-full cursor-pointer accent-green-500"
             />
             <div className="flex items-center gap-3 text-white">
-              <button type="button" aria-label={videoPlaying ? "إيقاف الفيديو" : "تشغيل الفيديو"} onClick={toggleVideoPlayback} className="pointer-events-auto rounded p-1 text-green-400 hover:bg-white/20">
-                {videoPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 fill-current" />}
+              <button
+                type="button"
+                aria-label={videoPlaying ? "إيقاف الفيديو" : "تشغيل الفيديو"}
+                onClick={toggleVideoPlayback}
+                className="pointer-events-auto rounded p-1 text-green-400 hover:bg-white/20"
+              >
+                {videoPlaying ? (
+                  <Pause className="h-5 w-5" />
+                ) : (
+                  <Play className="h-5 w-5 fill-current" />
+                )}
               </button>
-              <button type="button" aria-label={videoMuted ? "تشغيل الصوت" : "كتم الصوت"} onClick={() => {
-                if (!videoRef.current) return;
-                videoRef.current.muted = !videoRef.current.muted;
-                setVideoMuted(videoRef.current.muted);
-              }} className="pointer-events-auto rounded p-1 hover:bg-white/20">
+              <button
+                type="button"
+                aria-label={videoMuted ? "تشغيل الصوت" : "كتم الصوت"}
+                onClick={() => {
+                  if (!videoRef.current) return;
+                  videoRef.current.muted = !videoRef.current.muted;
+                  setVideoMuted(videoRef.current.muted);
+                }}
+                className="pointer-events-auto rounded p-1 hover:bg-white/20"
+              >
                 {videoMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
               </button>
-              <button type="button" aria-label="تأخير 5 ثواني" onClick={() => seekVideo(-5)} className="pointer-events-auto rounded p-1 hover:bg-white/20">
+              <button
+                type="button"
+                aria-label="تأخير 5 ثواني"
+                onClick={() => seekVideo(-5)}
+                className="pointer-events-auto rounded p-1 hover:bg-white/20"
+              >
                 <RotateCcw className="h-5 w-5" />
               </button>
-              <button type="button" aria-label="تقديم 5 ثواني" onClick={() => seekVideo(5)} className="pointer-events-auto rounded p-1 hover:bg-white/20">
+              <button
+                type="button"
+                aria-label="تقديم 5 ثواني"
+                onClick={() => seekVideo(5)}
+                className="pointer-events-auto rounded p-1 hover:bg-white/20"
+              >
                 <RotateCw className="h-5 w-5" />
               </button>
-              <span className="text-xs tabular-nums">{formatVideoTime(videoTime)} / {formatVideoTime(videoDuration)}</span>
+              <span className="text-xs tabular-nums">
+                {formatVideoTime(videoTime)} / {formatVideoTime(videoDuration)}
+              </span>
               <label className="pointer-events-auto hidden items-center gap-1 text-xs sm:flex">
                 <Gauge className="h-4 w-4 text-green-400" />
-                <select aria-label="سرعة التشغيل" value={playbackRate} onChange={(event) => {
-                  const rate = Number(event.target.value);
-                  setPlaybackRate(rate);
-                  if (videoRef.current) videoRef.current.playbackRate = rate;
-                }} className="bg-transparent text-white outline-none">
-                  {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => <option key={rate} value={rate} className="bg-black text-white">{rate}x</option>)}
+                <select
+                  aria-label="سرعة التشغيل"
+                  value={playbackRate}
+                  onChange={(event) => {
+                    const rate = Number(event.target.value);
+                    setPlaybackRate(rate);
+                    if (videoRef.current) videoRef.current.playbackRate = rate;
+                  }}
+                  className="bg-transparent text-white outline-none"
+                >
+                  {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
+                    <option key={rate} value={rate} className="bg-black text-white">
+                      {rate}x
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="pointer-events-auto hidden text-xs sm:block">
-                <select aria-label="جودة الفيديو" value={videoQuality} onChange={(event) => setVideoQuality(event.target.value)} className="bg-transparent text-white outline-none">
-                  <option value="auto" className="bg-black text-white">الجودة: تلقائي</option>
-                  <option value="source" className="bg-black text-white">الجودة: المصدر</option>
+                <select
+                  aria-label="جودة الفيديو"
+                  value={videoQuality}
+                  onChange={(event) => setVideoQuality(event.target.value)}
+                  className="bg-transparent text-white outline-none"
+                >
+                  <option value="auto" className="bg-black text-white">
+                    الجودة: تلقائي
+                  </option>
+                  <option value="source" className="bg-black text-white">
+                    الجودة: المصدر
+                  </option>
                 </select>
               </label>
-              <button type="button" aria-label="ملء الشاشة" onClick={() => void toggleFullscreen()} className="pointer-events-auto ms-auto rounded p-1 hover:bg-white/20">
+              <button
+                type="button"
+                aria-label="ملء الشاشة"
+                onClick={() => void toggleFullscreen()}
+                className="pointer-events-auto ms-auto rounded p-1 hover:bg-white/20"
+              >
                 <Maximize2 className="h-5 w-5" />
               </button>
             </div>
@@ -627,7 +714,9 @@ function CourseDetail() {
           <div className="px-4 text-center">
             <Play className="mx-auto h-12 w-12 text-muted-foreground" />
             <p className="mt-2 text-sm text-muted-foreground">
-              {videoError ? "تعذّر تشغيل ملف الفيديو. أعد رفعه بصيغة MP4 أو WebM." : "لا يوجد فيديو متاح"}
+              {videoError
+                ? "تعذّر تشغيل ملف الفيديو. أعد رفعه بصيغة MP4 أو WebM."
+                : "لا يوجد فيديو متاح"}
             </p>
           </div>
         </div>
@@ -812,9 +901,10 @@ function CourseDetail() {
 
         <TabsContent value="comments" className="mt-4">
           <CourseComments
-            courseId={course.id}
+            courseId={courseId}
             comments={comments || []}
             onComment={handleAddComment}
+            onLike={handleLikeComment}
           />
         </TabsContent>
 
@@ -857,22 +947,46 @@ function MaterialItem({
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="flex items-center justify-between gap-3 p-3 text-right">
-        <button type="button" onClick={() => setOpen((value) => !value)} className="min-w-0 flex-1 text-right hover:text-green-600">
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          className="min-w-0 flex-1 text-right hover:text-green-600"
+        >
           <p className="truncate text-sm font-semibold">{material.title}</p>
-          <p className="text-xs text-muted-foreground">{material.kind} • {open ? "إخفاء المعاينة" : "عرض الملف"}</p>
+          <p className="text-xs text-muted-foreground">
+            {material.kind} • {open ? "إخفاء المعاينة" : "عرض الملف"}
+          </p>
         </button>
-        <button type="button" aria-label={`تنزيل ${material.title}`} onClick={onDownload} className="rounded p-2 text-green-600 hover:bg-green-500/10">
+        <button
+          type="button"
+          aria-label={`تنزيل ${material.title}`}
+          onClick={onDownload}
+          className="rounded p-2 text-green-600 hover:bg-green-500/10"
+        >
           <Download className="h-4 w-4" />
         </button>
       </div>
       {open && url && (
         <div className="border-t border-border bg-muted/30 p-2">
           {isPdf ? (
-            <iframe title={material.title} src={url} className="h-[420px] w-full rounded bg-white" />
+            <iframe
+              title={material.title}
+              src={url}
+              className="h-[420px] w-full rounded bg-white"
+            />
           ) : isImage ? (
-            <img src={url} alt={material.title} className="max-h-[420px] w-full rounded object-contain" />
+            <img
+              src={url}
+              alt={material.title}
+              className="max-h-[420px] w-full rounded object-contain"
+            />
           ) : (
-            <a href={url} target="_blank" rel="noreferrer" className="block rounded bg-background p-4 text-center text-sm font-semibold text-green-600 hover:underline">
+            <a
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              className="block rounded bg-background p-4 text-center text-sm font-semibold text-green-600 hover:underline"
+            >
               فتح الملف في نافذة جديدة
             </a>
           )}
