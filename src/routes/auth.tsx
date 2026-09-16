@@ -13,15 +13,9 @@ import logo from "@/assets/logo.png";
 const PRODUCTION_ORIGIN = "https://sinjar.lovable.app";
 
 function getAuthRedirect(next?: string) {
-  // OAuth providers must be given a stable, allow-listed URL. Using the
-  // current preview origin here causes redirect_uri_mismatch after publish.
-  const origin =
-    typeof window !== "undefined" && window.location.hostname === "sinjar.lovable.app"
-      ? PRODUCTION_ORIGIN
-      : typeof window !== "undefined"
-        ? window.location.origin
-        : PRODUCTION_ORIGIN;
-  return `${origin}/auth${next ? `?next=${encodeURIComponent(next)}` : ""}`;
+  // Auth emails and OAuth callbacks must never use localhost or a preview
+  // hostname, because those URLs are not reachable from the user's device.
+  return `${PRODUCTION_ORIGIN}/auth${next ? `?next=${encodeURIComponent(next)}` : ""}`;
 }
 
 export const Route = createFileRoute("/auth")({
@@ -103,7 +97,7 @@ function AuthPage() {
       password,
       options: {
         data: { full_name: fullName.trim() },
-        emailRedirectTo: `${window.location.origin}/auth`,
+        emailRedirectTo: getAuthRedirect(),
       },
     });
     setLoading(false);
@@ -135,7 +129,7 @@ function AuthPage() {
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: normalizedEmail,
-      options: { emailRedirectTo: `${window.location.origin}/auth` },
+      options: { emailRedirectTo: getAuthRedirect() },
     });
     setLoading(false);
     if (error) {
@@ -153,7 +147,7 @@ function AuthPage() {
     }
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo: `${window.location.origin}/auth`,
+      redirectTo: getAuthRedirect(),
     });
     setLoading(false);
     if (error) {
