@@ -32,6 +32,24 @@ function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
 
+  async function handleGoogleSignIn() {
+    setLoading(true);
+    const redirectTo = `${window.location.origin}/auth${next ? `?next=${encodeURIComponent(next)}` : ""}`;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo },
+    });
+    if (error) {
+      setLoading(false);
+      const message = error.message.toLowerCase();
+      if (message.includes("provider is not enabled")) {
+        toast.error("تسجيل الدخول بواسطة Google غير مفعّل في إعدادات المنصة بعد.");
+        return;
+      }
+      toast.error(error.message);
+    }
+  }
+
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -147,6 +165,23 @@ function AuthPage() {
             </TabsList>
 
             <TabsContent value="signin">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading}
+                onClick={handleGoogleSignIn}
+                className="mb-4 w-full gap-2"
+              >
+                <span className="flex h-5 w-5 items-center justify-center rounded-full border text-xs font-bold">
+                  G
+                </span>
+                {loading ? "جارٍ التحويل..." : "المتابعة باستخدام Google"}
+              </Button>
+              <div className="mb-4 flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="h-px flex-1 bg-border" />
+                <span>أو باستخدام البريد الإلكتروني</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">البريد الإلكتروني</Label>
