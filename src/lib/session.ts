@@ -43,7 +43,11 @@ export function useSession() {
       ]);
 
       if (!mounted) return;
-      const role = roleRows?.[0]?.role ?? "student";
+      // The account project may expose the legacy Tadreeb admin flag instead
+      // of a user_roles row. Keep the designated owner able to access the
+      // dashboard even while a legacy session is being migrated.
+      const isDesignatedOwner = authUser.email?.trim().toLowerCase() === "abbasfasel2012@gmail.com";
+      const role = roleRows?.[0]?.role ?? (isDesignatedOwner ? "owner" : "student");
       setSession({
         user: {
           id: authUser.id,

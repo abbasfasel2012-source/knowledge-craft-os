@@ -1,11 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { Award, BookOpen, CheckCircle2, LayoutDashboard, Star, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isStaff, ROLE_LABELS, useSession } from "@/lib/session";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -22,6 +27,32 @@ export const Route = createFileRoute("/profile")({
 function ProfilePage() {
   const { user, isLoading, logout } = useSession();
   const queryClient = useQueryClient();
+  const [fullName, setFullName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  useEffect(() => {
+    setFullName(user?.full_name ?? "");
+    setAvatarUrl(user?.avatar_url ?? "");
+  }, [user?.full_name, user?.avatar_url]);
+
+  async function saveProfile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+    setSavingProfile(true);
+    const { error } = await supabase.rpc("update_my_profile", {
+      p_full_name: fullName.trim(),
+      p_avatar_url: avatarUrl.trim() || null,
+    });
+    setSavingProfile(false);
+    if (error) {
+      toast.error("تعذر حفظ بيانات الملف الشخصي.");
+      return;
+    }
+    toast.success("تم تحديث بيانات الملف الشخصي.");
+    await queryClient.invalidateQueries({ queryKey: ["profile-stats", user.id] });
+    window.location.reload();
+  }
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     enabled: !!user?.id,
@@ -215,6 +246,40 @@ function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="settings" className="mt-4 space-y-3">
+          <form
+            onSubmit={saveProfile}
+            className="space-y-3 rounded-lg border border-border bg-card p-4"
+          >
+            <p className="text-sm font-bold">تعديل بياناتي</p>
+            <div className="space-y-2">
+              <Label htmlFor="profile-full-name">الاسم الكامل</Label>
+              <Input
+                id="profile-full-name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="اكتب اسمك الكامل"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="profile-avatar-url">رابط الصورة الشخصية (اختياري)</Label>
+              <Input
+                id="profile-avatar-url"
+                type="url"
+                value={avatarUrl}
+                onChange={(e) => setAvatarUrl(e.target.value)}
+                placeholder="https://..."
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={savingProfile}
+              className="w-full gold-gradient text-gold-foreground"
+            >
+              {savingProfile ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+            </Button>
+          </form>
+
           <div className="space-y-3 rounded-lg border border-border bg-card p-4">
             <div>
               <p className="text-xs font-semibold text-muted-foreground">الاسم الكامل</p>
