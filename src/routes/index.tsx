@@ -113,8 +113,8 @@ function Home() {
           <div className="flex-1">
             <p className="font-bold text-destructive">تعذّر الاتصال بقاعدة البيانات</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              متغيرات Supabase غير مضبوطة. أضف VITE_SUPABASE_URL و VITE_SUPABASE_PUBLISHABLE_KEY
-              في إعدادات Lovable ثم أعد النشر.
+              تعذّر العثور على إعدادات Supabase. أضف VITE_SUPABASE_URL و
+              VITE_SUPABASE_PUBLISHABLE_KEY إلى إعدادات النشر ثم أعد النشر.
             </p>
           </div>
         </div>

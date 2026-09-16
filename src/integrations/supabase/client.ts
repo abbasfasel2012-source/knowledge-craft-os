@@ -16,8 +16,12 @@ export const isSupabaseConfigured = Boolean(
   rawUrl && rawKey && !rawUrl.includes("placeholder") && !rawUrl.includes("example.supabase.co"),
 );
 
+// The URL and publishable key are safe to expose in a browser bundle. Keeping
+// them as fallbacks prevents SSR from crashing when a host does not inject
+// VITE_* variables at build time (for example, a static preview deployment).
 const supabaseUrl = rawUrl || "https://sxhqgnmaiworluobansb.supabase.co";
-const supabasePublishableKey = rawKey || "";
+const supabasePublishableKey =
+  rawKey || "sb_publishable_wkC_3xxRC4aKXFcU1vp7Gw_aO6CrcHY";
 
 if (!isSupabaseConfigured && typeof window !== "undefined") {
   console.warn("Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.");
