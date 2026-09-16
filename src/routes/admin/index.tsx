@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Plus, Edit, Trash2, Eye, Users, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { isStaff, useSession } from "@/lib/session";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MediaImage } from "@/components/MediaImage";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/admin/")({
 
 function AdminDashboard() {
   const { user } = useSession();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
 
   // Fetch dashboard stats
@@ -42,18 +44,13 @@ function AdminDashboard() {
           .select("*", { count: "exact" });
 
         return {
-          courses: coursesCount?.length || 3,
-          users: usersCount?.length || 1,
-          enrollments: enrollmentsCount?.length || 12,
-          certificates: certificatesCount?.length || 5,
+          courses: coursesCount?.length ?? 0,
+          users: usersCount?.length ?? 0,
+          enrollments: enrollmentsCount?.length ?? 0,
+          certificates: certificatesCount?.length ?? 0,
         };
       } catch {
-        return {
-          courses: 3,
-          users: 1,
-          enrollments: 12,
-          certificates: 5,
-        };
+        return { courses: 0, users: 0, enrollments: 0, certificates: 0 };
       }
     },
   });
@@ -76,62 +73,11 @@ function AdminDashboard() {
           .from("courses")
           .select("*")
           .order("created_at", { ascending: false });
-        if (error || !data?.length) {
-          return [
-            {
-              id: "course-1",
-              title: "مقدمة شاملة في الذكاء الاصطناعي التوليدي وهندسة الأوامر",
-              students_count: 432,
-              duration_minutes: 120,
-              cover_url:
-                "https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80",
-            },
-            {
-              id: "course-2",
-              title: "تطوير تطبيقات الويب الحديثة باستخدام React و TypeScript",
-              students_count: 285,
-              duration_minutes: 180,
-              cover_url:
-                "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80",
-            },
-            {
-              id: "course-3",
-              title: "مبادئ تصميم تجربة وواجهة المستخدم (UI/UX Design)",
-              students_count: 512,
-              duration_minutes: 90,
-              cover_url:
-                "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=800&auto=format&fit=crop&q=80",
-            },
-          ];
-        }
-        return data;
-      } catch {
-        return [
-          {
-            id: "course-1",
-            title: "مقدمة شاملة في الذكاء الاصطناعي التوليدي وهندسة الأوامر",
-            students_count: 432,
-            duration_minutes: 120,
-            cover_url:
-              "https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80",
-          },
-          {
-            id: "course-2",
-            title: "تطوير تطبيقات الويب الحديثة باستخدام React و TypeScript",
-            students_count: 285,
-            duration_minutes: 180,
-            cover_url:
-              "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80",
-          },
-          {
-            id: "course-3",
-            title: "مبادئ تصميم تجربة وواجهة المستخدم (UI/UX Design)",
-            students_count: 512,
-            duration_minutes: 90,
-            cover_url:
-              "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=800&auto=format&fit=crop&q=80",
-          },
-        ];
+        if (error) throw error;
+        return data ?? [];
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "تعذر تحميل الدورات");
+        return [];
       }
     },
   });
@@ -208,10 +154,13 @@ function AdminDashboard() {
 
         {/* Courses Tab */}
         <TabsContent value="courses" className="space-y-3 mt-4">
-          <button className="w-full flex items-center justify-center gap-2 rounded-lg gold-gradient px-4 py-3 text-sm font-semibold text-gold-foreground">
+          <Link
+            to="/admin/courses"
+            className="w-full flex items-center justify-center gap-2 rounded-lg gold-gradient px-4 py-3 text-sm font-semibold text-gold-foreground"
+          >
             <Plus className="h-4 w-4" />
             إضافة دورة جديدة
-          </button>
+          </Link>
 
           {coursesLoading ? (
             <div className="space-y-2">
@@ -227,7 +176,11 @@ function AdminDashboard() {
                   className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
                 >
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
-                    <MediaImage src={course.cover_url} alt={course.title} className="h-full w-full object-cover" />
+                    <MediaImage
+                      src={course.cover_url}
+                      alt={course.title}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="line-clamp-1 text-sm font-semibold">{course.title}</p>
@@ -236,10 +189,30 @@ function AdminDashboard() {
                     </p>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <button className="rounded-lg border border-border bg-card p-2 hover:bg-muted transition-colors">
+                    <Link
+                      to="/admin/courses/$id"
+                      params={{ id: course.id }}
+                      className="rounded-lg border border-border bg-card p-2 hover:bg-muted transition-colors"
+                    >
                       <Edit className="h-4 w-4 text-gold" />
-                    </button>
-                    <button className="rounded-lg border border-border bg-card p-2 hover:bg-muted transition-colors">
+                    </Link>
+                    <button
+                      onClick={async () => {
+                        if (!window.confirm(`حذف الدورة "${course.title}"؟`)) return;
+                        const { error } = await supabase
+                          .from("courses")
+                          .delete()
+                          .eq("id", course.id);
+                        if (error) {
+                          toast.error(error.message);
+                          return;
+                        }
+                        toast.success("تم حذف الدورة");
+                        queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+                        queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+                      }}
+                      className="rounded-lg border border-border bg-card p-2 hover:bg-muted transition-colors"
+                    >
                       <Trash2 className="h-4 w-4 text-red-600" />
                     </button>
                   </div>
@@ -269,16 +242,18 @@ function AdminDashboard() {
                   className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
                 >
                   <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gold/10">
-                    <MediaImage src={u.avatar_url} alt={u.full_name || ""} className="h-full w-full object-cover" />
+                    <MediaImage
+                      src={u.avatar_url}
+                      alt={u.full_name || ""}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="line-clamp-1 text-sm font-semibold">{u.full_name || "مستخدم"}</p>
                     <p className="text-xs text-muted-foreground">{u.id.slice(0, 8)}</p>
                   </div>
                   <span
-                    className={`shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${
-                      "bg-muted text-muted-foreground"
-                    }`}
+                    className={`shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${"bg-muted text-muted-foreground"}`}
                   >
                     مستخدم
                   </span>

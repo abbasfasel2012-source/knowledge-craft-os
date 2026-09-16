@@ -91,7 +91,11 @@ function AdminCourses() {
               <CardContent className="p-3">
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
-                    <MediaImage src={c.cover_url} alt={c.title} className="h-full w-full object-cover" />
+                    <MediaImage
+                      src={c.cover_url}
+                      alt={c.title}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="line-clamp-1 text-sm font-semibold">{c.title}</p>
@@ -179,7 +183,6 @@ function CourseForm({
       summary,
       description,
       category_id: categoryId || null,
-      instructor_id: userId,
       level,
       is_free: isFree,
       price: isFree ? 0 : price,
