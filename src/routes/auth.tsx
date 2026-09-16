@@ -41,8 +41,13 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) {
-      if (error.message.toLowerCase().includes("email not confirmed")) {
+      const message = error.message.toLowerCase();
+      if (message.includes("email not confirmed")) {
         toast.error("يجب تأكيد بريدك الإلكتروني أولاً من الرسالة المرسلة إليك.");
+        return;
+      }
+      if (message.includes("invalid login credentials")) {
+        toast.error("البريد الإلكتروني أو كلمة المرور غير صحيحة.");
         return;
       }
       toast.error(error.message);
