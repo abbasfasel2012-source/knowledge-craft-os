@@ -8,13 +8,15 @@ AS $$
 DECLARE
   assigned_role public.app_role;
 BEGIN
-  INSERT INTO public.profiles (id, full_name, avatar_url)
+  INSERT INTO public.profiles (id, username, full_name, avatar_url)
   VALUES (
     NEW.id,
+    COALESCE(NULLIF(split_part(NEW.email, '@', 1), ''), NEW.id::text),
     COALESCE(NULLIF(NEW.raw_user_meta_data->>'full_name', ''), split_part(NEW.email, '@', 1)),
     NEW.raw_user_meta_data->>'avatar_url'
   )
   ON CONFLICT (id) DO UPDATE SET
+    username = COALESCE(EXCLUDED.username, public.profiles.username),
     full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name),
     avatar_url = COALESCE(EXCLUDED.avatar_url, public.profiles.avatar_url);
 
