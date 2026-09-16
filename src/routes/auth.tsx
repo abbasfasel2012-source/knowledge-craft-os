@@ -82,6 +82,44 @@ function AuthPage() {
     }
   }
 
+  async function resendConfirmation() {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      toast.error("اكتب بريدك الإلكتروني أولاً.");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: normalizedEmail,
+      options: { emailRedirectTo: `${window.location.origin}/auth` },
+    });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("تمت إعادة إرسال رسالة التأكيد. افحص البريد المهمل أيضاً.");
+  }
+
+  async function resetPassword() {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      toast.error("اكتب بريدك الإلكتروني أولاً.");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("تم إرسال رابط إعادة تعيين كلمة المرور.");
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
       <div className="mb-8 flex flex-col items-center gap-3">
@@ -142,6 +180,24 @@ function AuthPage() {
                 >
                   {loading ? "جارٍ الدخول..." : "دخول"}
                 </Button>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <button
+                    type="button"
+                    onClick={resendConfirmation}
+                    disabled={loading}
+                    className="hover:text-foreground hover:underline"
+                  >
+                    إعادة إرسال التأكيد
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetPassword}
+                    disabled={loading}
+                    className="hover:text-foreground hover:underline"
+                  >
+                    نسيت كلمة المرور؟
+                  </button>
+                </div>
               </form>
             </TabsContent>
 
