@@ -16,9 +16,12 @@ export const isSupabaseConfigured = Boolean(
   rawUrl && rawKey && !rawUrl.includes("placeholder") && !rawUrl.includes("example.supabase.co"),
 );
 
-const supabaseUrl = rawUrl || "https://demo-training-platform.supabase.co";
-const supabasePublishableKey =
-  rawKey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_anon_key_for_preview";
+const supabaseUrl = rawUrl || "https://sxhqgnmaiworluobansb.supabase.co";
+const supabasePublishableKey = rawKey || "";
+
+if (!isSupabaseConfigured && typeof window !== "undefined") {
+  console.warn("Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.");
+}
 
 export const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey, {
   auth: {
