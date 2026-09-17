@@ -147,9 +147,8 @@ export async function recomputeCourseProgress(
   if (progress >= 100) {
     await supabase
       .from("certificates")
-      .insert({ user_id: userId, course_id: courseId })
-      .onConflict("user_id,course_id" as never)
-      .ignore();
+      .upsert({ user_id: userId, course_id: courseId }, { onConflict: "user_id,course_id" })
+      .then(() => undefined); // تجاهل الخطأ إن كانت الشهادة موجودة
   }
 
   return progress;

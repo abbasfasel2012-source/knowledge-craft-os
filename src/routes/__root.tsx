@@ -127,6 +127,24 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
 
+  // إزالة علامة Lovable المائية ديناميكياً
+  useEffect(() => {
+    const removeBadge = () => {
+      document.querySelectorAll<HTMLElement>(
+        '[data-lovable-badge], .lovable-badge, #lovable-badge, a[href*="lovable.app"]',
+      ).forEach((el) => {
+        const style = window.getComputedStyle(el);
+        if (style.position === "fixed" || el.hasAttribute("data-lovable-badge")) {
+          el.remove();
+        }
+      });
+    };
+    removeBadge();
+    const observer = new MutationObserver(removeBadge);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;

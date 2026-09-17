@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Edit3, Upload, X } from "lucide-react";
+import { Plus, Edit3, Upload, X, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { uploadMedia } from "@/lib/storage";
 import { MediaImage } from "@/components/MediaImage";
@@ -183,6 +183,18 @@ function CourseForm({
     toast.success("تمت إضافة التصنيف");
   }
 
+  async function handleDeleteCategory(id: string, name: string) {
+    if (!confirm(`هل تريد حذف تصنيف "${name}"؟ سيُزال من جميع الدورات المرتبطة به.`)) return;
+    const { error } = await supabase.from("categories").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    if (categoryId === id) setCategoryId("");
+    onCategoryCreated(); // إعادة تحميل القائمة
+    toast.success("تم حذف التصنيف");
+  }
+
   async function handleUploadCover(file: File) {
     try {
       if (!canUpload) {
@@ -265,11 +277,30 @@ function CourseForm({
                 ))}
               </SelectContent>
             </Select>
+            {/* قائمة التصنيفات مع زر الحذف */}
+            {categories.length > 0 && (
+              <div className="mt-1 max-h-32 overflow-y-auto rounded-lg border border-border bg-muted/30 p-1.5">
+                {categories.map((c) => (
+                  <div key={c.id} className="flex items-center justify-between rounded px-1.5 py-0.5 hover:bg-muted">
+                    <span className="text-xs">{c.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCategory(c.id, c.name)}
+                      className="p-0.5 text-destructive hover:bg-destructive/10 rounded"
+                      aria-label={`حذف ${c.name}`}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="mt-2 flex gap-2">
               <Input
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
                 placeholder="تصنيف جديد"
+                onKeyDown={(e) => e.key === "Enter" && void handleCreateCategory()}
               />
               <Button
                 type="button"

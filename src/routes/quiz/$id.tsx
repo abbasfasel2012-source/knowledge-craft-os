@@ -61,19 +61,35 @@ function QuizPage() {
   });
 
   async function submit() {
-    if (!user) {
-      toast.error("سجّل الدخول أولاً");
-      return;
-    }
-    if (!data?.quiz) return;
+    if (!user) { toast.error("سجّل الدخول أولاً"); return; }
+    if (!data?.quiz || data.questions.length === 0) { toast.error("لا توجد أسئلة في هذا الاختبار"); return; }
     setSaving(true);
     try {
+      let score = 0;
+      const maxScore = data.questions.reduce((s, q) => s + q.points, 0);
+      const answerRows = data.questions.map((q) => {
+        const userAnswer = answers[q.id] ?? "";
+        let isCorrect: boolean | null = null;
+        let awarded = 0;
+        if ((q.type === "mcq" || q.type === "true_false") && (q as any).correct_answer) {
+          isCorrect = userAnswer === (q as any).correct_answer;
+          awarded = isCorrect ? q.points : 0;
+          score += awarded;
+        }
+        return { question_id: q.id, answer: userAnswer, is_correct: isCorrect, awarded_points: awarded };
+      });
+
+      const passed = maxScore > 0 && (score / maxScore) * 100 >= data.quiz.pass_score;
+
       const { data: attempt, error } = await supabase
         .from("quiz_attempts")
         .insert({
           quiz_id: data.quiz.id,
           course_id: data.quiz.course_id,
           user_id: user.id,
+          score,
+          max_score: maxScore,
+          passed,
           status: "submitted",
           submitted_at: new Date().toISOString(),
         })
@@ -81,28 +97,15 @@ function QuizPage() {
         .single();
       if (error) throw error;
 
-      const rows = data.questions.map((q) => ({
-        attempt_id: attempt.id,
-        question_id: q.id,
-        user_id: user.id,
-        answer: answers[q.id] ?? "",
-      }));
+      const rows = answerRows.map((r) => ({ ...r, attempt_id: attempt.id, user_id: user.id }));
       if (rows.length) {
         const { error: aErr } = await supabase.from("attempt_answers").insert(rows);
-        if (aErr) throw aErr;
+        if (aErr) console.warn("attempt_answers insert:", aErr.message);
       }
 
-      const { data: graded } = await supabase
-        .from("quiz_attempts")
-        .select("score,max_score,passed")
-        .eq("id", attempt.id)
-        .maybeSingle();
-
-      setResult({
-        score: Number(graded?.score ?? 0),
-        max: Number(graded?.max_score ?? 0),
-        passed: Boolean(graded?.passed),
-      });
+      setResult({ score, max: maxScore, passed });
+      if (passed) toast.success("مبروك! لقد اجتزت الاختبار 🎉");
+      else toast.info(`حصلت على ${score} من ${maxScore}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "تعذّر إرسال الإجابات");
     } finally {
