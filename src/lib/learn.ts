@@ -4,15 +4,11 @@ import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 /** الاشتراك في دورة (إن لم يكن مشتركاً). */
 export async function enroll(courseId: string, userId: string) {
   if (!isSupabaseConfigured) return;
-  try {
-    const { error } = await supabase
-      .from("enrollments")
-      .insert({ course_id: courseId, user_id: userId, progress: 0 });
-    if (error && !error.message.includes("duplicate")) {
-      console.warn("Enrollment notice:", error.message);
-    }
-  } catch (err) {
-    console.warn("Offline enrollment:", err);
+  const { error } = await supabase
+    .from("enrollments")
+    .insert({ course_id: courseId, user_id: userId, progress: 0 });
+  if (error && !error.message.includes("duplicate") && !error.code?.includes("23505")) {
+    throw new Error(error.message);
   }
 }
 
@@ -95,100 +91,93 @@ export async function saveLessonProgress(params: {
 }) {
   const { userId, courseId, lessonId, lastPosition, secondsWatched = 0, completed } = params;
   if (!isSupabaseConfigured) return;
-  try {
-    const { data: existing } = await supabase
-      .from("lesson_progress")
-      .select("id,seconds_watched,completed")
-      .eq("user_id", userId)
-      .eq("lesson_id", lessonId)
-      .maybeSingle();
-
-    if (existing) {
-      await supabase
-        .from("lesson_progress")
-        .update({
-          last_position: Math.round(lastPosition),
-          seconds_watched: Math.max(existing.seconds_watched, Math.round(secondsWatched)),
-          completed: completed ?? existing.completed,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", existing.id);
-    } else {
-      await supabase.from("lesson_progress").insert({
-        user_id: userId,
-        course_id: courseId,
-        lesson_id: lessonId,
-        last_position: Math.round(lastPosition),
-        seconds_watched: Math.round(secondsWatched),
-        completed: completed ?? false,
-      });
-    }
-  } catch {
-    // ignore offline
+  const completedAt = completed ? new Date().toISOString() : undefined;
+  const { error } = await supabase.from("lesson_progress").upsert(
+    {
+      user_id: userId,
+      course_id: courseId,
+      lesson_id: lessonId,
+      last_position: Math.round(lastPosition),
+      seconds_watched: Math.round(secondsWatched),
+      ...(completed !== undefined ? { completed } : {}),
+      ...(completedAt ? { completed_at: completedAt } : {}),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,lesson_id" },
+  );
+  if (error) {
+    console.warn("lesson_progress upsert:", error.message);
   }
 }
 
-/**
- * يعيد حساب نسبة تقدّم الدورة من الدروس المكتملة، ويضبط تاريخ الإكمال
- * عند إنهاء كل الدروس (وهذا ما يُصدر الشهادة تلقائياً على الخادم).
- */
-export async function recomputeCourseProgress(courseId: string, userId: string) {
-  void userId;
-  if (!isSupabaseConfigured) return 100;
-  try {
-    const [{ count: total }, { count: done }] = await Promise.all([
-      supabase
-        .from("lessons")
-        .select("id", { count: "exact", head: true })
-        .eq("course_id", courseId),
-      supabase
-        .from("lesson_progress")
-        .select("id", { count: "exact", head: true })
-        .eq("course_id", courseId)
-        .eq("user_id", userId)
-        .eq("completed", true),
-    ]);
+/** إعادة حساب تقدم المستخدم في الدورة وتحديث enrollments. */
+export async function recomputeCourseProgress(
+  courseId: string,
+  userId: string,
+): Promise<number> {
+  if (!isSupabaseConfigured) return 0;
 
-    const totalCount = total ?? 0;
-    const doneCount = done ?? 0;
-    const local = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+  const { data: lessons } = await supabase
+    .from("lessons")
+    .select("id")
+    .eq("course_id", courseId);
+  const total = lessons?.length ?? 0;
+  if (total === 0) return 0;
 
-    // التقدّم يُحتسب على الخادم من الدروس المكتملة فعلياً (لا يمكن للمتدرب تزويره).
-    const { data: serverProgress } = await supabase.rpc("recompute_enrollment_progress", {
-      _course_id: courseId,
-    });
-    return typeof serverProgress === "number" ? serverProgress : local;
-  } catch {
-    return 100;
+  const { data: progressRows } = await supabase
+    .from("lesson_progress")
+    .select("lesson_id,completed")
+    .eq("course_id", courseId)
+    .eq("user_id", userId)
+    .eq("completed", true);
+
+  const completedCount = progressRows?.length ?? 0;
+  const progress = Math.min(100, Math.floor((completedCount / total) * 100));
+
+  const updatePayload: Record<string, unknown> = { progress };
+  if (progress >= 100) updatePayload.completed_at = new Date().toISOString();
+
+  await supabase
+    .from("enrollments")
+    .update(updatePayload)
+    .eq("course_id", courseId)
+    .eq("user_id", userId);
+
+  // منح الشهادة تلقائياً عند الإتمام
+  if (progress >= 100) {
+    await supabase
+      .from("certificates")
+      .insert({ user_id: userId, course_id: courseId })
+      .onConflict("user_id,course_id" as never)
+      .ignore();
   }
+
+  return progress;
 }
 
-/** تنزيل ملف عبر رابطه مع اسم مناسب. */
-export async function downloadFile(url: string, filename: string) {
-  const signed = (await resolveMedia(url)) ?? url;
-  const res = await fetch(signed);
-  if (!res.ok) throw new Error("تعذّر تحميل الملف");
-  const blob = await res.blob();
-  const objectUrl = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = objectUrl;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(objectUrl);
-}
-
-/** مشاركة عبر واجهة المشاركة الأصلية أو نسخ الرابط. */
-export async function shareLink(title: string, url: string) {
-  if (typeof navigator !== "undefined" && navigator.share) {
+/** مشاركة رابط الدورة. */
+export async function shareLink(title: string, url: string): Promise<"shared" | "copied"> {
+  if (navigator.share) {
     try {
       await navigator.share({ title, url });
-      return "shared" as const;
+      return "shared";
     } catch {
-      /* المستخدم ألغى المشاركة */
+      // ignored
     }
   }
   await navigator.clipboard.writeText(url);
-  return "copied" as const;
+  return "copied";
+}
+
+/** تنزيل ملف من مسار Storage. */
+export async function downloadFile(url: string, filename: string) {
+  const resolved = (await resolveMedia(url)) ?? url;
+  const res = await fetch(resolved);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const blob = await res.blob();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }

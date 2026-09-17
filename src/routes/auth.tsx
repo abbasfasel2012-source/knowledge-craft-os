@@ -10,12 +10,18 @@ import { toast } from "sonner";
 import { GraduationCap, Mail, Lock, User } from "lucide-react";
 import logo from "@/assets/logo.png";
 
-const PRODUCTION_ORIGIN = "https://sinjar.lovable.app";
+function getProductionOrigin(): string {
+  if (typeof window === "undefined") return "";
+  const { hostname, origin } = window.location;
+  // في بيئة التطوير المحلي، استخدم الـ origin الحالي
+  if (hostname === "localhost" || hostname === "127.0.0.1") return origin;
+  // في النشر الفعلي، استخدم الـ origin الحالي دائماً
+  return origin;
+}
 
 function getAuthRedirect(next?: string) {
-  // Auth emails and OAuth callbacks must never use localhost or a preview
-  // hostname, because those URLs are not reachable from the user's device.
-  return `${PRODUCTION_ORIGIN}/auth${next ? `?next=${encodeURIComponent(next)}` : ""}`;
+  const base = getProductionOrigin();
+  return `${base}/auth${next ? `?next=${encodeURIComponent(next)}` : ""}`;
 }
 
 export const Route = createFileRoute("/auth")({

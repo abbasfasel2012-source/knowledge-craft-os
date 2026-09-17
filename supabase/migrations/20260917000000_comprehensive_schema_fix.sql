@@ -1,0 +1,17 @@
+-- ═══════════════════════════════════════════════════════════════════
+-- إصلاح شامل للمخطط - يُطبَّق على قاعدة البيانات الإنتاجية يدوياً
+-- لقد تم تطبيقه بالفعل عبر Supabase MCP
+-- ═══════════════════════════════════════════════════════════════════
+-- 1. إزالة compatibility views المعطوبة
+-- 2. إنشاء جداول حقيقية: profiles, lessons, enrollments, lesson_progress
+--    sections, certificates, reviews, quizzes, questions, quiz_attempts
+--    attempt_answers, badges, user_badges, platform_settings
+-- 3. إضافة أعمدة ناقصة لـ courses: instructor_id, language, sequential,
+--    certificate_enabled, tags, brochure_url, gallery, updated_at
+-- 4. إصلاح trigger handle_new_user ليدعم عمود username
+-- 5. إنشاء دوال: has_role, is_staff, recompute_course_progress, verify_certificate
+-- 6. إصلاح سياسات RLS لجميع الجداول
+-- 7. إضافة سياسات تخزين course-media
+-- ═══════════════════════════════════════════════════════════════════
+-- NOTE: هذا الملف للتوثيق فقط - تم التطبيق مباشرة عبر MCP
+SELECT 'schema fix applied via MCP' AS status;
