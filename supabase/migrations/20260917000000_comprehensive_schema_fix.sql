@@ -15,3 +15,11 @@
 -- ═══════════════════════════════════════════════════════════════════
 -- NOTE: هذا الملف للتوثيق فقط - تم التطبيق مباشرة عبر MCP
 SELECT 'schema fix applied via MCP' AS status;
+
+-- ══ تحديث 2: إصلاح RLS وإزالة الثغرات الأمنية (2026-09-18) ══
+-- - حذف "Admins can manage courses" (public ALL - ثغرة خطيرة)
+-- - حذف "Admins can manage course_materials" (public ALL)
+-- - حذف "Bootstrap first admin" (public INSERT)
+-- - إزالة 8 سياسات مكررة: categories, qna_posts, reactions, saved_items, qna_likes
+-- - إضافة quiz_questions_view للاختبارات
+-- - إصلاح RLS saved_items/lessons/courses للمحفوظات
