@@ -46,6 +46,16 @@ function isH3SwallowedErrorBody(body: string): boolean {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    // حقن متغيرات Cloudflare Worker في process.env
+    // لأن createServerFn يقرأ من process.env وليس من env مباشرةً
+    if (env && typeof env === "object") {
+      for (const [key, value] of Object.entries(env as Record<string, unknown>)) {
+        if (typeof value === "string" && !process.env[key]) {
+          process.env[key] = value;
+        }
+      }
+    }
+
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);

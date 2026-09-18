@@ -19,8 +19,12 @@ async function callGemini(
   messages: { role: string; content: string }[],
   systemPrompt?: string,
 ): Promise<GeminiResult> {
-  const apiKey = process.env["GEMINI_API_KEY"] || "";
-  if (!apiKey) return { ok: false, message: "مفتاح Gemini غير مضبوط في البيئة (GEMINI_API_KEY)." };
+  // process.env يُحقن من Cloudflare Worker env في server.ts
+  const apiKey =
+    process.env["GEMINI_API_KEY"] ||
+    process.env["VITE_GEMINI_API_KEY"] ||
+    "";
+  if (!apiKey) return { ok: false, message: "مفتاح Gemini غير مضبوط. أضف GEMINI_API_KEY في إعدادات Lovable." };
 
   // تحويل الرسائل لصيغة Gemini (user/model بدل user/assistant)
   const contents: GeminiContent[] = messages.map((m) => ({
