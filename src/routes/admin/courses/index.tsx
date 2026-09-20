@@ -223,6 +223,7 @@ function CourseForm({
       price: isFree ? 0 : price,
       status: status as "draft" | "published" | "archived",
       cover_url: coverUrl || null,
+      instructor_id: userId,
     });
     setSaving(false);
     if (error) {

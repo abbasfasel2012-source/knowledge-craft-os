@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { MessageCircle, ThumbsUp, Send } from "lucide-react";
+import { MessageCircle, ThumbsUp, Send, Loader2 } from "lucide-react";
 import { useSession } from "@/lib/session";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 interface Comment {
   id: string;
@@ -10,13 +11,13 @@ interface Comment {
   content: string;
   timestamp: string;
   likes: number;
-  replies?: Comment[];
+  likedByMe?: boolean;
 }
 
 interface CourseCommentsProps {
-  courseId: string;
+  courseId?: string;
   comments?: Comment[];
-  onComment?: (content: string) => void;
+  onComment?: (content: string) => void | Promise<void>;
   onLike?: (commentId: string) => Promise<boolean>;
 }
 
@@ -29,32 +30,44 @@ export function CourseComments({
   const { user } = useSession();
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
+  const [likingId, setLikingId] = useState<string | null>(null);
+  // Track optimistic like state: commentId → liked status
+  const [likeState, setLikeState] = useState<Record<string, boolean>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !user) return;
-
+    if (!newComment.trim()) return;
+    if (!user) { toast.error("سجّل الدخول للتعليق"); return; }
     setIsSubmitting(true);
     try {
-      if (onComment) {
-        onComment(newComment);
-      }
+      await onComment?.(newComment.trim());
       setNewComment("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "تعذّر إرسال التعليق");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const toggleLike = async (commentId: string) => {
-    const persisted = onLike ? await onLike(commentId) : !likedComments.has(commentId);
-    const newLiked = new Set(likedComments);
-    if (!persisted) {
-      newLiked.delete(commentId);
-    } else {
-      newLiked.add(commentId);
+    if (!user) { toast.error("سجّل الدخول للتفاعل"); return; }
+    if (likingId) return; // منع النقر المزدوج
+    setLikingId(commentId);
+    // تحديث فوري (optimistic)
+    const prev = likeState[commentId] ?? false;
+    setLikeState((s) => ({ ...s, [commentId]: !prev }));
+    try {
+      if (onLike) {
+        const persisted = await onLike(commentId);
+        setLikeState((s) => ({ ...s, [commentId]: persisted }));
+      }
+    } catch (err) {
+      // استرجاع الحالة السابقة عند الخطأ
+      setLikeState((s) => ({ ...s, [commentId]: prev }));
+      toast.error(err instanceof Error ? err.message : "تعذّر حفظ الإعجاب");
+    } finally {
+      setLikingId(null);
     }
-    setLikedComments(newLiked);
   };
 
   return (
@@ -67,8 +80,7 @@ export function CourseComments({
         </span>
       </div>
 
-      {/* Comment Form */}
-      {user && (
+      {user ? (
         <form
           onSubmit={handleSubmit}
           className="space-y-2 rounded-xl border border-border bg-card p-3"
@@ -82,50 +94,66 @@ export function CourseComments({
               type="text"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="شارك تعليقك..."
+              placeholder="شارك تعليقك أو سؤالك..."
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              disabled={isSubmitting}
             />
             <button
               type="submit"
               disabled={isSubmitting || !newComment.trim()}
               className="rounded-lg gold-gradient p-2 text-gold-foreground disabled:opacity-50"
             >
-              <Send className="h-4 w-4" />
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </button>
           </div>
         </form>
+      ) : (
+        <p className="text-center text-xs text-muted-foreground">
+          سجّل الدخول للمشاركة في النقاش
+        </p>
       )}
 
-      {/* Comments List */}
       <div className="space-y-3">
-        {comments.map((comment) => (
-          <div key={comment.id} className="space-y-2 rounded-xl border border-border bg-card p-3">
-            <div className="flex items-start gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={comment.avatar} />
-                <AvatarFallback>{comment.author.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">{comment.author}</p>
-                  <span className="text-xs text-muted-foreground">{comment.timestamp}</span>
+        {comments.map((comment) => {
+          const liked = likeState[comment.id] ?? comment.likedByMe ?? false;
+          const displayLikes = comment.likes + (
+            (likeState[comment.id] !== undefined && likeState[comment.id] !== (comment.likedByMe ?? false))
+              ? (likeState[comment.id] ? 1 : -1)
+              : 0
+          );
+          return (
+            <div key={comment.id} className="space-y-2 rounded-xl border border-border bg-card p-3">
+              <div className="flex items-start gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={comment.avatar} />
+                  <AvatarFallback>{comment.author.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">{comment.author}</p>
+                    <span className="text-xs text-muted-foreground">{comment.timestamp}</span>
+                  </div>
+                  <p className="mt-1 text-sm">{comment.content}</p>
                 </div>
-                <p className="mt-1 text-sm text-foreground">{comment.content}</p>
               </div>
+              <button
+                type="button"
+                onClick={() => void toggleLike(comment.id)}
+                disabled={likingId === comment.id}
+                className={`flex items-center gap-1 text-xs font-semibold transition-colors ${
+                  liked ? "text-gold" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {likingId === comment.id ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <ThumbsUp className={`h-3 w-3 ${liked ? "fill-gold" : ""}`} />
+                )}
+                {Math.max(0, displayLikes)}
+              </button>
             </div>
-            <button
-              onClick={() => void toggleLike(comment.id)}
-              className={`flex items-center gap-1 text-xs font-semibold transition-colors ${
-                likedComments.has(comment.id)
-                  ? "text-gold"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <ThumbsUp className="h-3 w-3" />
-              {comment.likes + (likedComments.has(comment.id) ? 1 : 0)}
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {comments.length === 0 && (

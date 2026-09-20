@@ -92,17 +92,18 @@ export async function saveLessonProgress(params: {
   const { userId, courseId, lessonId, lastPosition, secondsWatched = 0, completed } = params;
   if (!isSupabaseConfigured) return;
   const completedAt = completed ? new Date().toISOString() : undefined;
+  const upsertPayload: Record<string, unknown> = {
+    user_id: userId,
+    course_id: courseId,
+    lesson_id: lessonId,
+    last_position: Math.round(lastPosition),
+    seconds_watched: Math.round(secondsWatched),
+    updated_at: new Date().toISOString(),
+  };
+  if (completed !== undefined) upsertPayload["completed"] = completed;
+  if (completedAt) upsertPayload["completed_at"] = completedAt;
   const { error } = await supabase.from("lesson_progress").upsert(
-    {
-      user_id: userId,
-      course_id: courseId,
-      lesson_id: lessonId,
-      last_position: Math.round(lastPosition),
-      seconds_watched: Math.round(secondsWatched),
-      ...(completed !== undefined ? { completed } : {}),
-      ...(completedAt ? { completed_at: completedAt } : {}),
-      updated_at: new Date().toISOString(),
-    },
+    upsertPayload as never,
     { onConflict: "user_id,lesson_id" },
   );
   if (error) {
@@ -139,7 +140,7 @@ export async function recomputeCourseProgress(
 
   await supabase
     .from("enrollments")
-    .update(updatePayload)
+    .update(updatePayload as never)
     .eq("course_id", courseId)
     .eq("user_id", userId);
 

@@ -6,8 +6,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const GEMINI_MODEL = "gemini-2.0-flash";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
-
-
 type GeminiResult = { ok: true; text: string } | { ok: false; message: string };
 
 interface GeminiContent {
@@ -19,26 +17,22 @@ async function callGemini(
   messages: { role: string; content: string }[],
   systemPrompt?: string,
 ): Promise<GeminiResult> {
-  // process.env يُحقن من Cloudflare Worker env في server.ts
   const apiKey =
     process.env["GEMINI_API_KEY"] ||
     process.env["VITE_GEMINI_API_KEY"] ||
     "";
-  if (!apiKey) return { ok: false, message: "مفتاح Gemini غير مضبوط. أضف GEMINI_API_KEY في إعدادات Lovable." };
+  if (!apiKey) return { ok: false, message: "مفتاح Gemini غير مضبوط. أضف GEMINI_API_KEY في إعدادات Lovable → Secrets." };
 
-  // تحويل الرسائل لصيغة Gemini (user/model بدل user/assistant)
   const contents: GeminiContent[] = messages.map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
     parts: [{ text: m.content }],
   }));
 
-  // Gemini يحتاج أن تبدأ المحادثة بـ "user"
-  // وأن تتناوب الأدوار user/model بدون تكرار
+  // دمج الرسائل المتكررة لنفس الدور
   const normalizedContents: GeminiContent[] = [];
   for (const msg of contents) {
     const last = normalizedContents[normalizedContents.length - 1];
     if (last && last.role === msg.role) {
-      // دمج الرسائل المتكررة لنفس الدور
       last.parts[0].text += "\n" + msg.parts[0].text;
     } else {
       normalizedContents.push({ ...msg, parts: [...msg.parts] });
@@ -147,6 +141,82 @@ export const generateLessonContent = createServerFn({ method: "POST" })
         },
       ],
       "أنت مساعد إعداد محتوى تدريبي عربي دقيق ومختصر.",
+    );
+
+    return result.ok
+      ? { ok: true as const, text: result.text }
+      : { ok: false as const, message: result.message };
+  });
+
+// ─── تصحيح الإجابات المقالية والقصيرة بالذكاء الاصطناعي ──────────────────────
+const gradeSchema = z.object({
+  question: z.string().max(2000),
+  correctAnswer: z.string().max(4000),
+  studentAnswer: z.string().max(4000),
+  maxPoints: z.number().int().min(1).max(100),
+  extraContext: z.string().max(2000).default(""),
+});
+
+export const gradeEssayAnswer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => gradeSchema.parse(data))
+  .handler(async ({ data }) => {
+    const prompt =
+      `أنت مصحح اختبارات متخصص. قارن إجابة الطالب بالإجابة النموذجية وقيّمها بموضوعية وعدالة.\n\n` +
+      `السؤال: ${data.question}\n` +
+      `الإجابة النموذجية: ${data.correctAnswer}\n` +
+      (data.extraContext ? `سياق إضافي: ${data.extraContext}\n` : "") +
+      `إجابة الطالب: ${data.studentAnswer}\n\n` +
+      `الدرجة الكاملة للسؤال: ${data.maxPoints}\n\n` +
+      `استجب بصيغة JSON فقط دون أي نص آخر:\n` +
+      `{"score": <رقم من 0 إلى ${data.maxPoints}>, "feedback": "<تعليق مختصر جملة أو جملتان بالعربية>"}`;
+
+    const result = await callGemini(
+      [{ role: "user", content: prompt }],
+      "أنت مصحح اختبارات دقيق ومنصف. استجب بـ JSON فقط.",
+    );
+
+    if (!result.ok) return { ok: false as const, message: result.message };
+
+    try {
+      const cleaned = result.text.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(cleaned) as { score: number; feedback: string };
+      const score = Math.min(data.maxPoints, Math.max(0, Math.round(Number(parsed.score))));
+      return { ok: true as const, score, feedback: String(parsed.feedback || "") };
+    } catch {
+      return { ok: false as const, message: "تعذّر تحليل نتيجة التصحيح الذكي." };
+    }
+  });
+
+// ─── توليد نص تلقائي من محتوى الدرس (نسخة نصية تقريبية) ─────────────────────
+const transcriptSchema = z.object({
+  title: z.string().max(300),
+  content: z.string().max(8000).default(""),
+  aiContext: z.string().max(3000).default(""),
+  summary: z.string().max(1000).default(""),
+});
+
+export const generateTranscript = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => transcriptSchema.parse(data))
+  .handler(async ({ data }) => {
+    const sourceText = [
+      data.summary && `الملخص: ${data.summary}`,
+      data.content && `المحتوى: ${data.content}`,
+      data.aiContext && `السياق: ${data.aiContext}`,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    const prompt =
+      `بناءً على المعلومات التالية عن درس بعنوان "${data.title}"، ` +
+      `أنشئ نصاً تقريبياً شاملاً يمثّل ما يمكن أن يُقال في هذا الدرس بأسلوب تعليمي. ` +
+      `اجعله طبيعياً كأنه نص إلقاء فعلي باللغة العربية الفصحى المبسطة.\n\n` +
+      (sourceText || "(لا توجد معلومات متاحة، أنشئ نصاً تعليمياً عاماً حول عنوان الدرس)");
+
+    const result = await callGemini(
+      [{ role: "user", content: prompt }],
+      "أنت كاتب محتوى تعليمي محترف باللغة العربية.",
     );
 
     return result.ok

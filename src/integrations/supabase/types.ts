@@ -624,6 +624,35 @@ export type Database = {
         };
         Relationships: [];
       };
+      qna_likes: {
+        Row: {
+          id: string;
+          qna_post_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          qna_post_id: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          qna_post_id?: string;
+          user_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "qna_likes_qna_post_id_fkey";
+            columns: ["qna_post_id"];
+            isOneToOne: false;
+            referencedRelation: "qna_posts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       qna_posts: {
         Row: {
           body: string;
@@ -1074,7 +1103,7 @@ export type Database = {
     Enums: {
       app_role: "owner" | "instructor" | "moderator" | "student";
       course_status: "draft" | "published" | "archived";
-      lesson_type: "video" | "pdf" | "text" | "link" | "quiz";
+      lesson_type: "video" | "pdf" | "text" | "link" | "quiz" | "audio";
       question_type: "mcq" | "true_false" | "short" | "essay";
     };
     CompositeTypes: {

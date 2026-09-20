@@ -213,7 +213,7 @@ function CourseDetail() {
         const ids = [...new Set((data || []).map((r) => r.user_id))];
         const postIds = (data || []).map((r) => r.id);
         const { data: likes } = postIds.length
-          ? await (supabase as any)
+          ? await supabase
               .from("qna_likes")
               .select("qna_post_id")
               .in("qna_post_id", postIds)
@@ -462,8 +462,7 @@ function CourseDetail() {
 
   const handleLikeComment = async (commentId: string) => {
     if (requireLogin()) return false;
-    const db = supabase as any;
-    const { data: existing, error: readError } = await db
+    const { data: existing, error: readError } = await supabase
       .from("qna_likes")
       .select("id")
       .eq("qna_post_id", commentId)
@@ -471,12 +470,12 @@ function CourseDetail() {
       .maybeSingle();
     if (readError) throw readError;
     if (existing) {
-      const { error } = await db.from("qna_likes").delete().eq("id", existing.id);
+      const { error } = await supabase.from("qna_likes").delete().eq("id", existing.id);
       if (error) throw error;
       await refetchComments();
       return false;
     }
-    const { error } = await db
+    const { error } = await supabase
       .from("qna_likes")
       .insert({ qna_post_id: commentId, user_id: user!.id });
     if (error) throw error;
