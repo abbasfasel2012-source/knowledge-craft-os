@@ -3,7 +3,9 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // ─── Google Gemini API ────────────────────────────────────────────────────────
-const GEMINI_MODEL = "gemini-2.0-flash";
+// Keep the provider secret server-side. The model can be overridden by the
+// server environment without exposing an API key to the browser bundle.
+const GEMINI_MODEL = process.env["GEMINI_MODEL"] || "gemini-3.8-flash";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 type GeminiResult = { ok: true; text: string } | { ok: false; message: string };
@@ -17,11 +19,13 @@ async function callGemini(
   messages: { role: string; content: string }[],
   systemPrompt?: string,
 ): Promise<GeminiResult> {
-  const apiKey =
-    process.env["GEMINI_API_KEY"] ||
-    process.env["VITE_GEMINI_API_KEY"] ||
-    "";
-  if (!apiKey) return { ok: false, message: "مفتاح Gemini غير مضبوط. أضف GEMINI_API_KEY في إعدادات Lovable → Secrets." };
+  const apiKey = process.env["GEMINI_API_KEY"] || "";
+  if (!apiKey) {
+    return {
+      ok: false,
+      message: "مفتاح Gemini غير مضبوط. أضف GEMINI_API_KEY في إعدادات الخادم/Secrets.",
+    };
+  }
 
   const contents: GeminiContent[] = messages.map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
@@ -49,20 +53,40 @@ async function callGemini(
 
   let res: Response;
   try {
-    res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-  } catch {
-    return { ok: false, message: "تعذّر الاتصال بخدمة Gemini." };
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45_000);
+    try {
+      res = await fetch(`${GEMINI_URL}?key=${encodeURIComponent(apiKey)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof Error && error.name === "AbortError"
+          ? "استغرق Gemini وقتاً أطول من المتوقع، حاول مجدداً."
+          : "تعذّر الاتصال بخدمة Gemini.",
+    };
   }
 
-  if (res.status === 429) return { ok: false, message: "الطلبات كثيرة، انتظر قليلاً ثم أعد المحاولة." };
+  if (res.status === 429)
+    return { ok: false, message: "الطلبات كثيرة، انتظر قليلاً ثم أعد المحاولة." };
   if (res.status === 403) return { ok: false, message: "مفتاح Gemini غير صالح أو انتهت صلاحيته." };
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
-    const errMsg = (() => { try { return JSON.parse(errText)?.error?.message; } catch { return null; } })();
+    const errMsg = (() => {
+      try {
+        return JSON.parse(errText)?.error?.message;
+      } catch {
+        return null;
+      }
+    })();
     return { ok: false, message: errMsg || `خطأ من Gemini (${res.status}).` };
   }
 
