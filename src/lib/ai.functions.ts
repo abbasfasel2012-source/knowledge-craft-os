@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // ─── Google Gemini API ────────────────────────────────────────────────────────
 // Keep the provider secret server-side. The model can be overridden by the
@@ -142,7 +141,6 @@ const askSchema = z.object({
 });
 
 export const askLessonAI = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => askSchema.parse(data))
   .handler(async ({ data }) => {
     const systemPrompt =

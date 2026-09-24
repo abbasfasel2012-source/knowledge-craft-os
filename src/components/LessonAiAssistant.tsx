@@ -96,13 +96,16 @@ export function LessonAiAssistant({
           { role: "assistant", text: result.message, isError: true },
         ]);
       }
-    } catch {
+    } catch (error) {
+      console.error("Lesson AI request failed", error);
       setAiReady(false);
+      const message =
+        error instanceof Error && error.message ? error.message : "تعذّر تشغيل المساعد حالياً.";
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          text: "حدث خطأ أثناء الاتصال بالمساعد. تحقق من إعدادات مفتاح Gemini ثم حاول مجدداً.",
+          text: message,
           isError: true,
         },
       ]);
