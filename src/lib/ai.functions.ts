@@ -5,8 +5,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 // ─── Google Gemini API ────────────────────────────────────────────────────────
 // Keep the provider secret server-side. The model can be overridden by the
 // server environment without exposing an API key to the browser bundle.
-const GEMINI_MODEL = process.env["GEMINI_MODEL"] || "gemini-3.8-flash";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GEMINI_MODEL = process.env["GEMINI_MODEL"] || "gemini-2.5-flash";
+const GEMINI_FALLBACK_MODEL = "gemini-2.5-flash-lite";
 
 type GeminiResult = { ok: true; text: string } | { ok: false; message: string };
 
@@ -19,7 +19,12 @@ async function callGemini(
   messages: { role: string; content: string }[],
   systemPrompt?: string,
 ): Promise<GeminiResult> {
-  const apiKey = process.env["GEMINI_API_KEY"] || "";
+  const apiKey =
+    process.env["GEMINI_API_KEY"] ||
+    process.env["GOOGLE_GEMINI_API_KEY"] ||
+    process.env["GOOGLE_GENERATIVE_AI_API_KEY"] ||
+    process.env["VITE_AI_API_KEY"] ||
+    "";
   if (!apiKey) {
     return {
       ok: false,
@@ -56,12 +61,15 @@ async function callGemini(
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 45_000);
     try {
-      res = await fetch(`${GEMINI_URL}?key=${encodeURIComponent(apiKey)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
+      res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        },
+      );
     } finally {
       clearTimeout(timeout);
     }
@@ -75,8 +83,28 @@ async function callGemini(
     };
   }
 
+  // Google may temporarily return 503 for a busy model. Retry once with a
+  // stable lite model so the assistant does not fail unnecessarily.
+  if (res.status === 503 && GEMINI_MODEL !== GEMINI_FALLBACK_MODEL) {
+    try {
+      const fallback = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_FALLBACK_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+      if (fallback.ok) res = fallback;
+    } catch {
+      // Keep the original response and return a useful service error below.
+    }
+  }
+
   if (res.status === 429)
     return { ok: false, message: "الطلبات كثيرة، انتظر قليلاً ثم أعد المحاولة." };
+  if (res.status === 503)
+    return { ok: false, message: "خدمة Gemini مشغولة مؤقتاً، حاول بعد لحظات." };
   if (res.status === 403) return { ok: false, message: "مفتاح Gemini غير صالح أو انتهت صلاحيته." };
   if (!res.ok) {
     const errText = await res.text().catch(() => "");

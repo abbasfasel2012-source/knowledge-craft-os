@@ -100,7 +100,11 @@ export function LessonAiAssistant({
       setAiReady(false);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: "حدث خطأ أثناء الاتصال بالمساعد. تحقق من إعدادات GEMINI_API_KEY في Lovable.", isError: true },
+        {
+          role: "assistant",
+          text: "حدث خطأ أثناء الاتصال بالمساعد. تحقق من إعدادات مفتاح Gemini ثم حاول مجدداً.",
+          isError: true,
+        },
       ]);
     } finally {
       setIsLoading(false);
@@ -136,8 +140,8 @@ export function LessonAiAssistant({
           <div>
             <p className="font-semibold">المساعد الذكي غير متاح حالياً</p>
             <p className="mt-1 text-muted-foreground">
-              تأكد من إضافة <code className="rounded bg-destructive/10 px-1">GEMINI_API_KEY</code> في إعدادات
-              Lovable → Secrets. يمكنك الحصول على مفتاح مجاني من{" "}
+              تأكد من إضافة <code className="rounded bg-destructive/10 px-1">GEMINI_API_KEY</code>{" "}
+              في أسرار الخادم. يمكنك الحصول على مفتاح مجاني من{" "}
               <a
                 href="https://aistudio.google.com/app/apikey"
                 target="_blank"
@@ -196,11 +200,17 @@ export function LessonAiAssistant({
                 components={{
                   p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
                   strong: ({ children }) => <strong className="font-bold">{children}</strong>,
-                  ul: ({ children }) => <ul className="my-2 list-disc space-y-1 pr-5">{children}</ul>,
-                  ol: ({ children }) => <ol className="my-2 list-decimal space-y-1 pr-5">{children}</ol>,
+                  ul: ({ children }) => (
+                    <ul className="my-2 list-disc space-y-1 pr-5">{children}</ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="my-2 list-decimal space-y-1 pr-5">{children}</ol>
+                  ),
                   li: ({ children }) => <li>{children}</li>,
                   code: ({ children }) => (
-                    <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">{children}</code>
+                    <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+                      {children}
+                    </code>
                   ),
                 }}
               >
